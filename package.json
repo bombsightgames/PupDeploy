@@ -1,0 +1,18 @@
+{
+  "name": "pupdeploy",
+  "version": "0.0.1",
+  "description": "A light weight web based deployment utility.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js"
+  },
+  "author": "Brandon Ray",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.14.0",
+    "nedb": "^1.8.0",
+    "simple-ssh": "^0.9.0",
+    "socket.io": "^1.5.0"
+  }
+}
