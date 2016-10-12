@@ -9,6 +9,19 @@ var Datastore = require('nedb'),
 io.on('connection', function(socket){
   console.log('a user connected');
 });
+
+app.get('/login', function(req, res) {
+	console.log('test');
+	res.send('wot');
+});
+
+app.use(express.static('public'));
+app.use(function(req, res, next){
+    res.sendFile(__dirname + '/public/index.html');
+});
+http.listen(3000, function () {
+	console.log('Listening on port 3000.');
+});
  
  /*
 var ssh = new SshClient({
@@ -23,8 +36,3 @@ ssh.exec('echo $PATH', {
     }
 }).start();
 */
-
-app.use(express.static('public'));
-http.listen(3000, function () {
-	console.log('Example app listening on port 3000!');
-});
