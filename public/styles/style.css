@@ -8,3 +8,7 @@ body {
     margin-bottom: 14px;
     padding: 6px;
 }
+
+.header-title {
+    color: white;
+}

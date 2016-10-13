@@ -3,6 +3,7 @@ var express = require('express');
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+var bodyParser = require('body-parser');
 var Datastore = require('nedb'),
 	db = new Datastore();
 
@@ -10,9 +11,13 @@ io.on('connection', function(socket){
   console.log('a user connected');
 });
 
-app.get('/login', function(req, res) {
-	console.log('test');
-	res.send('wot');
+app.use(bodyParser.json());
+app.post('/login', function(req, res) {
+	if (req.body.username === 'admin' && req.body.password === '123123') {
+		res.send({success: true, token: 'a43wfwasaf'});
+	} else {
+		res.send({success: false, message: 'Invalid username or password.'});
+	}
 });
 
 app.use(express.static('public'));
