@@ -1,6 +1,7 @@
 var SshClient = require('simple-ssh');
 var express = require('express');
 var _ = require('lodash');
+var process = require('child_process');
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
@@ -17,6 +18,23 @@ db.projects = new Datastore({
 
 io.on('connection', function(socket){
     console.log('A user connected.');
+
+    socket.on('project_run', function(id, cb) {
+        db.projects.findOne({_id: id}, function(err, project) {
+            if (err) {
+                console.error('Failed to run project:', err);
+                cb('Failed to run project.');
+            } else {
+                if (project) {
+                    console.log('Running project:', project.name);
+                    runProject(socket, project);
+                    cb();
+                } else {
+                    cb('Invalid project.');
+                }
+            }
+        });
+    });
 
     socket.on('project_list', function(data, cb) {
         db.projects.find({}, function(err, docs) {
@@ -71,16 +89,23 @@ http.listen(3000, function () {
     console.log('Listening on port 3000.');
 });
 
- /*
-var ssh = new SshClient({
-    host: 'localhost.com',
-    user: 'brandon',
-    pass: '123123'
-});
- 
-ssh.exec('echo $PATH', {
-    out: function(stdout) {
-        console.log(stdout);
-    }
-}).start();
-*/
+function runProject(socket, project) {
+    var ssh = new SshClient({
+        host: 'localhost.com',
+        user: 'brandon',
+        pass: '123123'
+    });
+
+    _.forEach(project.steps, function(step) {
+        console.log('Running commands:', step.commands);
+        ssh.exec(step.commands, {
+            out: function(stdout) {
+                console.log(stdout);
+            }
+        }).start();
+    });
+}
+
+function runTask(fn) {
+    var worker = process.fork();
+}

@@ -9,4 +9,14 @@ angular.module('app').controller('ProjectListController', function($scope, UserS
             $scope.$apply();
         }
     });
+
+    vm.runProject = function(id) {
+        UserService.socket.emit('project_run', id, function(err) {
+            if (err) {
+                growl.error(err);
+            } else {
+                growl.success('Running project...');
+            }
+        });
+    }
 });
