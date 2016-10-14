@@ -12,6 +12,7 @@
   "dependencies": {
     "body-parser": "^1.15.2",
     "express": "^4.14.0",
+    "lodash": "^4.16.4",
     "nedb": "^1.8.0",
     "simple-ssh": "^0.9.0",
     "socket.io": "^1.5.0"

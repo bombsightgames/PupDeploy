@@ -12,3 +12,11 @@ body {
 .header-title {
     color: white;
 }
+
+.well-header {
+    font-size: 25px;
+}
+.well {
+    background-color: #CCC;
+    padding: 8px;
+}

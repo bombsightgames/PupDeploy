@@ -1,0 +1,32 @@
+<div class="text-left" class="form-group">
+    <h2>New Project</h2>
+    <br>
+    <div class="row">
+        <div class="col-md-2 well-header">General</div>
+        <div class="col-md-10 container-fluid well">
+            <label>Name</label>
+            <input class="form-control" type="text" ng-model="vm.data.name">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-2 well-header">Steps</div>
+        <div class="col-md-10 container-fluid well">
+            <div ng-repeat="(index, step) in vm.data.steps">
+                <label>Step #{{index+1}}</label>
+                <textarea class="form-control" rows="2" ng-model="vm.data.steps[index].commands"></textarea>
+                <br>
+            </div>
+            <div class="text-right">
+                <button class="btn btn-success" ng-click="vm.addStep()">
+                    <i class="fa fa-plus"></i> Add Step
+                </button>
+            </div>
+        </div>
+    </div>
+    <br><br>
+    <div class="text-right">
+        <button class="btn btn-success" ng-click="vm.save()">
+            <i class="fa fa-save"></i> Save Project
+        </button>
+    </div>
+</div>
