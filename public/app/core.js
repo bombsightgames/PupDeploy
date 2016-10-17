@@ -24,6 +24,12 @@ angular.module('app', [
     }).when('/projects/view/:id', {
         controller: 'ProjectViewController as vm',
         templateUrl: '/app/project/view.html'
+    }).when('/settings', {
+        controller: 'SettingsController as vm',
+        templateUrl: '/app/settings/settings.html'
+    }).when('/users', {
+        controller: 'UsersListController as vm',
+        templateUrl: '/app/users/list.html'
     }).otherwise({
         redirectTo: '/'
     });

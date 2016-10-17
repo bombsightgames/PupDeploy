@@ -3,6 +3,9 @@
 </div>
 <div class="text-left">
     <h2><i class="fa fa-folder-open"></i> Projects</h2>
+    <div class="container-fluid well text-center" ng-if="!vm.projects || vm.projects.length <= 0">
+        <h3>You do not have any projects.</h3>
+    </div>
     <div class="container-fluid well" ng-repeat="(index, project) in vm.projects">
             <div class="well-header">{{project.name}}</div>
             <div class="row">
