@@ -76,7 +76,7 @@ angular.module('app').controller('ProjectViewController', function($scope, $loca
             vm.project.status = data.status;
             vm.project.error = data.error;
 
-            if (data.error) {
+            if (data.error && Object.keys(vm.logs).length < vm.project.steps.length) {
                 vm.logs = null;
             }
 
