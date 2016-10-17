@@ -4,8 +4,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
     <meta charset="UTF-8">
     <base href="/">
-    <title>Title</title>
+    <title>PupDeploy</title>
 
+    <link rel="shortcut icon" href="/favicon.ico?v1" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico?v1" type="image/x-icon">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
     <link rel="stylesheet" href="/styles/style.css">
@@ -21,14 +23,23 @@
 </head>
 <body>
     <div growl></div>
-    <div ng-include src="'app/header/header.html'"></div>
+    <pd-header></pd-header>
     <div class="container">
         <div ng-view></div>
     </div>
+    <br><br>
+    <footer class="footer">
+        <div class="container footer-container text-center">
+            <p class="text-muted">PupDeploy v0.0.1</p>
+        </div>
+    </footer>
     <script src="/app/core.js"></script>
     <script src="/app/user/user.service.js"></script>
     <script src="/app/login/login.controller.js"></script>
+    <script src="/app/header/header.directive.js"></script>
     <script src="/app/project/list.controller.js"></script>
     <script src="/app/project/edit.controller.js"></script>
+    <script src="/app/project/view.controller.js"></script>
+    <script src="/app/project/status.directive.js"></script>
 </body>
 </html>

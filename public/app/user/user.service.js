@@ -1,9 +1,11 @@
 angular.module('services', [])
-    .service('UserService', function($rootScope, $http, $cookies, $location, $timeout, growl) {
+    .service('UserService', function($rootScope, $route, $http, $cookies, $location, $timeout, growl) {
         var service = {};
 
         service.socket = null;
+        service.userData = null;
 
+        var loggingOut = false;
         service.login = function(username, password) {
             return $http({
                 method: 'POST',
@@ -27,6 +29,7 @@ angular.module('services', [])
         };
 
         service.logout = function() {
+            loggingOut = true;
             service.destroySocket();
             $cookies.remove('pdtoken');
             window.location.reload();
@@ -44,13 +47,35 @@ angular.module('services', [])
                 var firstLogin = !$cookies.get('pdtoken');
 
                 service.socket = io('', {query: "token=" + token, reconnection: true});
+
+                var onevent = service.socket.onevent;
+                service.socket.onevent = function (packet) {
+                    var args = packet.data || [];
+                    onevent.call(this, packet);
+                    packet.data = ["*"].concat(args);
+                    onevent.call(this, packet);
+                };
+
+                service.socket.on('*', function(name, data) {
+                    $rootScope.$emit('socket:' + name, data);
+                    if ($route.current.scope) {
+                        $route.current.scope.$emit('socket:' + name, data);
+                    }
+                });
+
                 service.socket.on('connect', function() {
                     if (firstLogin) {
                         firstLogin = false;
                         $location.path('/');
                         $rootScope.$apply();
                     }
+
                     $rootScope.$emit('login');
+
+                    service.socket.once('user', function(data) {
+                        service.userData = data;
+                        $rootScope.$emit('userData');
+                    });
                 });
 
                 service.socket.on('connect_error', function(err) {
@@ -77,7 +102,9 @@ angular.module('services', [])
 
                 service.socket.on('disconnect', function() {
                     destroyConGrowl();
-                    conGrowl = growl.warning('Connection to server lost, attempting to reconnect.');
+                    if (!loggingOut) {
+                        conGrowl = growl.warning('Connection to server lost, attempting to reconnect.');
+                    }
                 });
             }
         };

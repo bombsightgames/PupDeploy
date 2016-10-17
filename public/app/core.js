@@ -20,7 +20,10 @@ angular.module('app', [
         templateUrl: '/app/project/edit.html'
     }).when('/projects/edit/:id', {
         controller: 'ProjectEditController as vm',
-        templateUrl: 'detail.html'
+        templateUrl: '/app/project/edit.html'
+    }).when('/projects/view/:id', {
+        controller: 'ProjectViewController as vm',
+        templateUrl: '/app/project/view.html'
     }).otherwise({
         redirectTo: '/'
     });
@@ -39,4 +42,23 @@ angular.module('app', [
     });
 }).controller('CoreController', function() {
     var vm = this;
+});
+
+angular.module('app').filter('capitalize', function() {
+    return function(input) {
+      return (!!input) ? input.charAt(0).toUpperCase() + input.substr(1).toLowerCase() : '';
+    }
+});
+
+angular.module('app').filter('consoleOutput', function () {
+    return function (input) {
+        var lines = input.split('\n'),
+            output = '\n';
+
+        for (var i=0; i<lines.length; i++) {
+            output += '> ' + lines[i] + '\n';
+        }
+
+        return output;
+    }
 });

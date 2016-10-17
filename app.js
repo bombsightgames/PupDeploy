@@ -19,6 +19,10 @@ db.projects = new Datastore({
 io.on('connection', function(socket){
     console.log('A user connected.');
 
+    socket.emit('user', {
+        username: 'admin'
+    });
+
     socket.on('project_run', function(id, cb) {
         db.projects.findOne({_id: id}, function(err, project) {
             if (err) {
@@ -36,6 +40,32 @@ io.on('connection', function(socket){
         });
     });
 
+    socket.on('project_get', function(id, cb) {
+        db.projects.findOne({_id: id}, function(err, project) {
+            if (err) {
+                console.error('Failed to get project:', err);
+                cb('Failed to get project.');
+            } else {
+                if (project) {
+                    cb(null, project);
+                } else {
+                    cb('Project not found.');
+                }
+            }
+        });
+    });
+
+    socket.on('project_delete', function(id, cb) {
+        db.projects.remove({_id: id}, function(err) {
+            if (err) {
+                console.error('Failed to delete project:', err);
+                cb('Failed to delete project.');
+            } else {
+                cb();
+            }
+        });
+    });
+
     socket.on('project_list', function(data, cb) {
         db.projects.find({}, function(err, docs) {
             if (err) {
@@ -48,8 +78,6 @@ io.on('connection', function(socket){
     });
 
     socket.on('project_update', function(data, cb) {
-        console.log("PROJECT", data);
-
         var steps = [];
         _.forEach(data.steps, function(step) {
             steps.push({
@@ -57,9 +85,14 @@ io.on('connection', function(socket){
             });
         });
 
-        db.projects.insert({
+        db.projects.update({
+            _id: data._id
+        }, {
             name: data.name,
-            steps: steps
+            steps: steps,
+            status: 'idle'
+        }, {
+            upsert: true
         }, function(err, doc) {
             if (err) {
                 console.error('Failed to create project:', err);
@@ -89,21 +122,99 @@ http.listen(3000, function () {
     console.log('Listening on port 3000.');
 });
 
-function runProject(socket, project) {
-    var ssh = new SshClient({
-        host: 'localhost.com',
-        user: 'brandon',
-        pass: '123123'
+function updateProjectStatus(id, status, error) {
+    db.projects.update({_id: id}, {$set: {status: status, error: error}}, function(err) {
+        if (err) {
+            console.error('Failed to update project status:', err);
+        } else {
+            io.emit('project_status', {
+                project: id,
+                status: status,
+                error: error
+            });
+        }
     });
+}
 
-    _.forEach(project.steps, function(step) {
-        console.log('Running commands:', step.commands);
+function runProject(socket, project) {
+    updateProjectStatus(project._id, 'running');
+
+    var error = false,
+        index = -1,
+        run = true;
+    function runNextStep() {
+        if (!run) {
+            console.log('Stopping project execution.');
+            return;
+        }
+
+        index++;
+        console.log("RUNNING STEP", index);
+
+        if (project.steps.length <= 0) {
+            if (error) {
+                updateProjectStatus(project._id, 'failed', 'One or more steps exited with a non-zero code.');
+            } else {
+                updateProjectStatus(project._id, 'succeeded');
+            }
+
+            return;
+        }
+
+        var step = project.steps.shift();
+
+        var ssh = new SshClient({
+            host: '192.168.198.128',
+            user: 'root',
+            pass: '123123'
+        });
+
+        ssh.on('error', function(err) {
+            console.error('SSH Error:', err);
+            updateProjectStatus(project._id, 'failed', err.level);
+            run = false;
+        });
+
         ssh.exec(step.commands, {
             out: function(stdout) {
-                console.log(stdout);
+                console.log('stdout:', stdout);
+                socket.emit('step_run', {
+                    project: project._id,
+                    index: index,
+                    step: step,
+                    output: stdout,
+                    type: 'out'
+                });
+            },
+            err: function(stderr) {
+                console.error('stderr:', stderr);
+                socket.emit('step_run', {
+                    project: project._id,
+                    index: index,
+                    step: step,
+                    output: stderr,
+                    type: 'error'
+                });
+            },
+            exit: function(code) {
+                console.log('Step End:', code);
+                socket.emit('step_end', {
+                    project: project._id,
+                    index: index,
+                    step: step,
+                    code: code
+                });
+
+                if (code != 0) {
+                    error = true;
+                }
+
+                runNextStep();
             }
         }).start();
-    });
+    }
+
+    runNextStep();
 }
 
 function runTask(fn) {
