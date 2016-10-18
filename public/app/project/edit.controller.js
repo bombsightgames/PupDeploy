@@ -48,7 +48,10 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
     } else {
         vm.project = {
             name: '',
-            steps: []
+            steps: [],
+            auth: {
+                type: 'password'
+            }
         };
         vm.addStep();
 

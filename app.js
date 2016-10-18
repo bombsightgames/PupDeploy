@@ -90,7 +90,13 @@ io.on('connection', function(socket){
         }, {
             name: data.name,
             steps: steps,
-            status: 'idle'
+            status: 'idle',
+            auth: {
+                username: data.auth.username,
+                type: data.auth.type,
+                password: data.auth.password,
+                key: data.auth.key
+            }
         }, {
             upsert: true
         }, function(err, doc) {
@@ -162,12 +168,21 @@ function runProject(socket, project) {
         }
 
         var step = project.steps.shift();
-
-        var ssh = new SshClient({
+        var options = {
             host: '192.168.198.128',
-            user: 'root',
-            pass: '123123'
-        });
+            user: project.auth.username
+        };
+
+        if (project.auth.type == 'password') {
+            options.pass = project.auth.password;
+        } else if (project.auth.type == 'key') {
+            options.key = project.auth.key;
+        } else {
+            updateProjectStatus(project._id, 'failed', 'Invalid authentication type.');
+            return;
+        }
+
+        var ssh = new SshClient(options);
 
         ssh.on('error', function(err) {
             console.error('SSH Error:', err);
@@ -211,7 +226,14 @@ function runProject(socket, project) {
 
                 runNextStep();
             }
-        }).start();
+        })
+
+        try {
+            ssh.start();
+        } catch (e) {
+            console.error('Failed to run SSH command:', e);
+            updateProjectStatus(project._id, 'failed', e.message);
+        }
     }
 
     runNextStep();
