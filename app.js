@@ -14,8 +14,6 @@ db.projects = new Datastore({
     autoload: true
 });
 
-//db.projects.persistence.setAutocompactionInterval(10);
-
 io.on('connection', function(socket){
     console.log('A user connected.');
 
@@ -85,12 +83,21 @@ io.on('connection', function(socket){
             });
         });
 
+        var servers = [];
+        _.forEach(data.servers, function(server) {
+            servers.push({
+                host: server.host
+            });
+        });
+
         db.projects.update({
             _id: data._id
         }, {
             name: data.name,
             steps: steps,
+            servers: servers,
             status: 'idle',
+            settings: data.settings,
             auth: {
                 username: data.auth.username,
                 type: data.auth.type,
@@ -146,20 +153,23 @@ function runProject(socket, project) {
     updateProjectStatus(project._id, 'running');
 
     var error = false,
-        index = -1,
-        run = true;
+        index = 0,
+        serverIndex = 0,
+        run = true,
+        steps = null,
+        servers = project.servers.slice(0),
+        server = null;
     function runNextStep() {
-        if (!run) {
-            console.log('Stopping project execution.');
-            return;
-        }
-
         index++;
-        console.log("RUNNING STEP", index);
-
-        if (project.steps.length <= 0) {
+        if (run && (!steps || steps.length <= 0) && servers.length > 0) {
+            server = servers.shift();
+            server.index = serverIndex;
+            serverIndex++;
+            steps = project.steps.slice(0);
+            index = 0;
+        } else if (!run || (servers.length <= 0 && steps.length <= 0)) {
             if (error) {
-                updateProjectStatus(project._id, 'failed', 'One or more steps exited with a non-zero code.');
+                updateProjectStatus(project._id, 'failed', server.host + ': One or more steps exited with a non-zero code.');
             } else {
                 updateProjectStatus(project._id, 'succeeded');
             }
@@ -167,9 +177,12 @@ function runProject(socket, project) {
             return;
         }
 
-        var step = project.steps.shift();
+        console.log("RUNNING STEP", server.host, index);
+
+        var step = steps.shift();
+
         var options = {
-            host: '192.168.198.128',
+            host: server.host,
             user: project.auth.username
         };
 
@@ -178,7 +191,7 @@ function runProject(socket, project) {
         } else if (project.auth.type == 'key') {
             options.key = project.auth.key;
         } else {
-            updateProjectStatus(project._id, 'failed', 'Invalid authentication type.');
+            updateProjectStatus(project._id, 'failed', server.host + ': Invalid authentication type.');
             return;
         }
 
@@ -186,7 +199,14 @@ function runProject(socket, project) {
 
         ssh.on('error', function(err) {
             console.error('SSH Error:', err);
-            updateProjectStatus(project._id, 'failed', err.level);
+            socket.emit('step_end', {
+                project: project._id,
+                index: index,
+                step: step,
+                server: server,
+                code: 1
+            });
+            updateProjectStatus(project._id, 'failed', server.host + ': ' + err.level);
             run = false;
         });
 
@@ -197,6 +217,7 @@ function runProject(socket, project) {
                     project: project._id,
                     index: index,
                     step: step,
+                    server: server,
                     output: stdout,
                     type: 'out'
                 });
@@ -207,32 +228,41 @@ function runProject(socket, project) {
                     project: project._id,
                     index: index,
                     step: step,
+                    server: server,
                     output: stderr,
                     type: 'error'
                 });
             },
             exit: function(code) {
-                console.log('Step End:', code);
-                socket.emit('step_end', {
-                    project: project._id,
-                    index: index,
-                    step: step,
-                    code: code
-                });
+                setTimeout(function() {
+                    console.log('Step End:', server.host, index, code);
+                    socket.emit('step_end', {
+                        project: project._id,
+                        index: index,
+                        step: step,
+                        server: server,
+                        code: code
+                    });
 
-                if (code != 0) {
-                    error = true;
-                }
+                    if (code != 0) {
+                        error = true;
+                        if (project.settings.haltOnFailure) {
+                            run = false;
+                        }
+                    }
 
-                runNextStep();
+                    setTimeout(function() {
+                        runNextStep();
+                    }, 500);
+                }, 100);
             }
-        })
+        });
 
         try {
             ssh.start();
         } catch (e) {
             console.error('Failed to run SSH command:', e);
-            updateProjectStatus(project._id, 'failed', e.message);
+            updateProjectStatus(project._id, 'failed', server.host + ': ' + e.message);
         }
     }
 

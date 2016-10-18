@@ -16,6 +16,18 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
         }
     };
 
+    vm.addServer = function() {
+        vm.project.servers.push({
+            host: ''
+        });
+    };
+
+    vm.removeServer = function(index) {
+        if (vm.project.servers[index].host === '' || confirm('Are you sure you want to remove this server?')) {
+            vm.project.servers.splice(index, 1);
+        }
+    };
+
     vm.save = function() {
         UserService.socket.emit('project_update', vm.project, function(err) {
             if (err) {
@@ -49,11 +61,16 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
         vm.project = {
             name: '',
             steps: [],
+            servers: [],
+            settings: {
+                haltOnFailure: true
+            },
             auth: {
                 type: 'password'
             }
         };
         vm.addStep();
+        vm.addServer();
 
         vm.loading = false;
     }

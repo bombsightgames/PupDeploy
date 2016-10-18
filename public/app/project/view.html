@@ -9,7 +9,7 @@
         <button class="btn btn-success" ng-click="vm.runProject()" ng-disabled="vm.project.status === 'running'">
             <i class="fa fa-play"></i> Run
         </button>
-        <button class="btn btn-primary" ng-click="vm.editProject()">
+        <button class="btn btn-primary" ng-click="vm.editProject()" ng-disabled="vm.project.status === 'running'">
             <i class="fa fa-edit"></i> Configure
         </button>
     </div>
@@ -18,10 +18,13 @@
     </h3>
     <div ng-if="vm.logs">
         <h2>Run Logs</h2>
-        <div class="well">
-            <div ng-repeat="(index, log) in vm.logs">
-                <label>Step #{{log.index+1}}</label>
-                <pre ng-class="{'bg-info': log.code == 0 || log.code == undefined, 'bg-danger': log.code > 0}">{{log.step.commands|consoleOutput}}<br>{{log.output}}<span ng-if="log.code > 0">Exit Code: {{log.code}}</span><i ng-if="log.code === undefined" class="fa fa-refresh fa-spin"></i></pre>
+        <div ng-repeat="(index, server) in vm.logs">
+            <label>Server #{{server.index+1}}: {{server.host}}</label>
+            <div class="well">
+                <div ng-repeat="(index, log) in server.logs">
+                    <label>Step #{{log.index+1}}</label>
+                    <pre ng-class="{'bg-info': log.code == 0 || log.code == undefined, 'bg-danger': log.code > 0}">{{log.step.commands|consoleOutput}}<br>{{log.output}}<span ng-if="log.code > 0">Exit Code: {{log.code}}</span><i ng-if="log.code === undefined" class="fa fa-refresh fa-spin"></i></pre>
+                </div>
             </div>
         </div>
     </div>
