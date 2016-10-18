@@ -63,7 +63,9 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
             steps: [],
             servers: [],
             settings: {
-                haltOnFailure: true
+                haltOnFailure: true,
+                enableMonitoring: false,
+                enableNotifications: false
             },
             auth: {
                 type: 'password'

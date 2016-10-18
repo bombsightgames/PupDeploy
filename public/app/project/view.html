@@ -6,12 +6,17 @@
     <div class="well">
         <pd-status status="vm.project.status"></pd-status>
         <br>
-        <button class="btn btn-success" ng-click="vm.runProject()" ng-disabled="vm.project.status === 'running'">
-            <i class="fa fa-play"></i> Run
-        </button>
-        <button class="btn btn-primary" ng-click="vm.editProject()" ng-disabled="vm.project.status === 'running'">
-            <i class="fa fa-edit"></i> Configure
-        </button>
+        <div class="text-left">
+            <button class="btn btn-success" ng-click="vm.runProject()" ng-disabled="vm.project.status === 'running'">
+                <i class="fa fa-play"></i> Run
+            </button>
+            <button class="btn btn-primary" ng-click="vm.editProject()" ng-disabled="vm.project.status === 'running'">
+                <i class="fa fa-edit"></i> Configure
+            </button>
+            <button class="btn btn-danger" ng-click="vm.deleteProject()" ng-disabled="project.status === 'running'">
+                <i class="fa fa-close"></i> Delete
+            </button>
+        </div>
     </div>
     <h3 ng-if="vm.project.error" class="bg bg-danger text-danger">
         <i class="fa fa-close"></i> Failed to deploy project: {{vm.project.error}}

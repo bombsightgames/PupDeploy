@@ -36,6 +36,19 @@ angular.module('app').controller('ProjectViewController', function($scope, $loca
         $location.path('/projects/edit/' + id);
     };
 
+    vm.deleteProject = function() {
+        if (confirm('Are you sure you want to delete this project?')) {
+            UserService.socket.emit('project_delete', id, function(err) {
+                if (err) {
+                    growl.error(err);
+                } else {
+                    growl.success('Project deleted successfully.');
+                    $location.path('/projects');
+                }
+            });
+        }
+    };
+
     $scope.$on('socket:step_run', function(event, data) {
         data.output += '\n';
 

@@ -14,6 +14,17 @@ db.projects = new Datastore({
     autoload: true
 });
 
+//Find projects that are stuck as running.
+db.projects.find({status: 'running'}, function(err, projects) {
+    if (err) {
+        console.error('Failed to get projects on startup:', err);
+    } else {
+        _.forEach(projects, function(project) {
+            updateProjectStatus(project._id, 'failed', 'PupDeploy server crashed or was shutdown during deployment.');
+        });
+    }
+});
+
 io.on('connection', function(socket){
     console.log('A user connected.');
 
@@ -65,12 +76,12 @@ io.on('connection', function(socket){
     });
 
     socket.on('project_list', function(data, cb) {
-        db.projects.find({}, function(err, docs) {
+        db.projects.find({}, function(err, projects) {
             if (err) {
                 console.error('Failed to get projects:', err);
                 cb('Failed to get projects.');
             } else {
-                cb(null, docs);
+                cb(null, projects);
             }
         });
     });

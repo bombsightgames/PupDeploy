@@ -10,9 +10,8 @@ angular.module('app').controller('ProjectListController', function($scope, $loca
                 $scope.$apply();
             }
         });
-    }
+    };
     vm.refreshProjects();
-
 
     vm.viewProject = function(id) {
         $location.path('/projects/view/' + id);
@@ -34,14 +33,14 @@ angular.module('app').controller('ProjectListController', function($scope, $loca
 
     vm.deleteProject = function(id) {
         if (confirm('Are you sure you want to delete this project?')) {
-        UserService.socket.emit('project_delete', id, function(err) {
-            if (err) {
-                growl.error(err);
-            } else {
-                growl.success('Project deleted.');
-                vm.refreshProjects();
-            }
-        });
+            UserService.socket.emit('project_delete', id, function(err) {
+                if (err) {
+                    growl.error(err);
+                } else {
+                    growl.success('Project deleted successfully.');
+                    vm.refreshProjects();
+                }
+            });
         }
     };
 });
