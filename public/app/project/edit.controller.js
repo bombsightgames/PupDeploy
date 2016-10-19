@@ -1,4 +1,4 @@
-angular.module('app').controller('ProjectEditController', function($rootScope, $location, growl, $routeParams, UserService) {
+angular.module('app').controller('ProjectEditController', function($rootScope, $scope, $location, growl, $routeParams, UserService) {
     var vm = this,
         id = $routeParams.id;
 
@@ -13,6 +13,18 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
     vm.removeStep = function(index) {
         if (vm.project.steps[index].commands === '' || confirm('Are you sure you want to remove this step?')) {
             vm.project.steps.splice(index, 1);
+        }
+    };
+
+    vm.addNotification = function() {
+        vm.project.notifications.push({
+            type: 'email'
+        });
+    };
+
+    vm.removeNotification = function(index) {
+        if (confirm('Are you sure you want to remove this notification?')) {
+            vm.project.notifications.splice(index, 1);
         }
     };
 
@@ -57,6 +69,33 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
         });
     };
 
+    $scope.$on('socket:slack_setup', function(event, data) {
+        if (data.error) {
+            growl.error(data.error);
+        } else {
+            console.log('Slack setup!', data);
+            for (var i=0; i<vm.project.notifications.length; i++) {
+                var notification = vm.project.notifications[i];
+                if (data.token == notification.token) {
+                    notification.slack = data.slack;
+                    growl.success('Slack setup successfully!');
+                    break;
+                }
+            }
+
+            $scope.$apply();
+        }
+    });
+
+    vm.authSlack = function(notification) {
+        notification.token = Math.floor(Math.random()*100000000);
+
+        var slackUrl = 'https://slack.com/oauth/authorize?scope=incoming-webhook&client_id=90733115808.92334895841&state=' + notification.token + '&redirect_uri=' + encodeURIComponent('http://pupdeploy.bombsightgames.com/api/' + window.location.protocol + '//' + window.location.host + '/slack');
+        if (notification.token && slackUrl) {
+            window.open(slackUrl, '_blank', 'width=600,height=500' + ', top=' + ((window.innerHeight - 500) / 2) + ', left=' + ((window.innerWidth - 600) / 2));
+        }
+    };
+
     vm.loading = true;
     if (id) {
         UserService.socket.emit('project_get', id, function(err, project) {
@@ -82,7 +121,8 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
             },
             auth: {
                 type: 'password'
-            }
+            },
+            notifications: []
         };
         vm.addStep();
         vm.addServer();

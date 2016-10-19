@@ -7,6 +7,7 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var bodyParser = require('body-parser');
 var Q = require('q');
+var request = require('request');
 var bcrypt = require('bcrypt-nodejs');
 var Datastore = require('nedb');
 
@@ -205,6 +206,14 @@ function init() {
                 });
             });
 
+            var notifications = [];
+            _.forEach(data.notifications, function(notification) {
+                notifications.push({
+                    type: notification.type,
+                    slack: notification.slack
+                });
+            });
+
             db.projects.update({
                 _id: data._id
             }, {
@@ -214,11 +223,12 @@ function init() {
                 status: 'idle',
                 settings: data.settings,
                 auth: {
-                    username: data.auth.username,
                     type: data.auth.type,
+                    username: data.auth.username,
                     password: data.auth.password,
                     key: data.auth.key
-                }
+                },
+                notifications: notifications
             }, {
                 upsert: true
             }, function(err, doc) {
@@ -283,6 +293,101 @@ function init() {
             }
         });
 
+    });
+
+    function slackRequest(path, data) {
+        var defer = Q.defer();
+
+        request.post({
+            url: 'https://slack.com/api' + path,
+            body: data,
+            json: true,
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            }
+        }, function (err, res, body) {
+            if (err) {
+                console.error('Slack request failed:', path, err);
+                defer.reject(err);
+            } else {
+                if (body.warning) {
+                    console.warn('Slack request returned a warning:', body.warning);
+                }
+
+                if (body.ok) {
+                    console.info('Slack response:', body);
+                    defer.resolve(body);
+                } else {
+                    console.error('Slack request returned an error:', body.error);
+                    defer.reject(body.error);
+                }
+            }
+        });
+
+        return defer.promise;
+    }
+
+    function bsgRequest(path, data) {
+        var defer = Q.defer();
+
+        request.post({
+            url: 'http://pupdeploy.bombsightgames.com/api' + path,
+            body: data,
+            json: true,
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            }
+        }, function (err, res, body) {
+            if (err) {
+                console.error('BSG request failed:', path, err);
+                defer.reject(err);
+            } else {
+                if (body.warning) {
+                    console.warn('BSG request returned a warning:', body.warning);
+                }
+
+                if (body.ok) {
+                    console.info('BSG response:', body);
+                    defer.resolve(body);
+                } else {
+                    console.error('BSG request returned an error:', body.error);
+                    defer.reject(body.error);
+                }
+            }
+        });
+
+        return defer.promise;
+    }
+
+    //TODO: Get session for verification.
+    app.get('/slack', function(req, res) {
+        if (req.query) {
+            if (req.query.error) {
+                console.error('Slack setup error:', req.query.error);
+                res.send('<script>window.close();</script>');
+            } else {
+                console.log(req.query.code);
+                console.log(req.query.state);
+                bsgRequest('/token', {
+                    code: req.query.code,
+                    redirect: 'http://pupdeploy.bombsightgames.com/api/' + encodeURIComponent(req.protocol + '://' + req.get('host') + '/slack')
+                }).then(function(data) {
+                    io.emit('slack_setup', {
+                        token: req.query.state,
+                        slack: data
+                    });
+                    res.send('<script>window.close();</script>');
+                }, function(err) {
+                    io.emit('slack_setup', {
+                        error: 'Failed to setup Slack.',
+                        token: req.query.state
+                    });
+                    res.send('<script>window.close();</script>');
+                });
+            }
+        } else {
+            res.redirect('/');
+        }
     });
 
     app.post('/setup', function(req, res) {

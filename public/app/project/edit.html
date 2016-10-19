@@ -80,7 +80,39 @@
         <div class="col-md-10 container-fluid well">
             <label><input type="checkbox" ng-model="vm.project.settings.enableNotifications"> Enable notifications.</label>
             <div ng-if="vm.project.settings.enableNotifications">
-                <i class="fa fa-close"></i> Not implemented yet.
+                <br>
+                <div class="form-group" ng-repeat="(index, notification) in vm.project.notifications">
+                    <label for="notificationType">Notification #{{index+1}}:</label><button ng-click="vm.removeNotification(index)" class="btn btn-danger btn-xs" style="float:right;"><i class="fa fa-close"></i></button>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <select class="form-control" id="notificationType" ng-model="vm.project.notifications[index].type">
+                                <option value="email">Email</option>
+                                <option value="slack">Slack</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8 text-center">
+                            <div ng-if="vm.project.notifications[index].type == 'email'">
+                                <p>Project users will be notified via email when the project is deployed.</p>
+                            </div>
+                            <div ng-if="vm.project.notifications[index].type == 'slack'">
+                                <div ng-if="notification.slack">
+                                    Posting to team {{notification.slack.team_name}} in channel {{notification.slack.incoming_webhook.channel}}.
+                                </div>
+                                <div ng-if="!notification.slack">
+                                    <a href="#" ng-click="vm.authSlack(notification)">
+                                        <img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" />
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <div class="text-right">
+                    <button class="btn btn-success" ng-click="vm.addNotification()">
+                        <i class="fa fa-plus"></i> Add Notification
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -96,7 +128,7 @@
         </div>
         <br><br>
         <div class="col-md-8 text-center">
-            <button class="btn btn-danger" ng-click="vm.deleteProject()" ng-disabled="project.status === 'running'">
+            <button ng-if="vm.id" class="btn btn-danger" ng-click="vm.deleteProject()" ng-disabled="project.status === 'running'">
                 <i class="fa fa-exclamation-triangle"></i> Delete Project <i class="fa fa-exclamation-triangle"></i>
             </button>
         </div>
@@ -106,7 +138,7 @@
         <div class="col-xs-10">
             <div class="row hidden-xs">
                 <div class="col-sm-8 text-left">
-                    <button class="btn btn-danger" ng-click="vm.deleteProject()" ng-disabled="project.status === 'running'">
+                    <button ng-if="vm.id" class="btn btn-danger" ng-click="vm.deleteProject()" ng-disabled="project.status === 'running'">
                         <i class="fa fa-exclamation-triangle"></i> Delete Project <i class="fa fa-exclamation-triangle"></i>
                     </button>
                 </div>
