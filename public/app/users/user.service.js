@@ -35,7 +35,8 @@ angular.module('services', [])
             window.location.reload();
         };
 
-        var conGrowl = null;
+        var conGrowl = null,
+            firstConnect = true;
         service.createSocket = function(token) {
             function destroyConGrowl() {
                 if (conGrowl) {
@@ -64,6 +65,7 @@ angular.module('services', [])
                 });
 
                 service.socket.on('connect', function() {
+                    firstConnect = false;
                     if (firstLogin) {
                         firstLogin = false;
                         $location.path('/');
@@ -77,6 +79,19 @@ angular.module('services', [])
                         $rootScope.$emit('userData');
                     });
                 });
+
+                service.socket.on('error', function(err) {
+                    console.error(err);
+                    
+                    if (firstConnect) {
+                        if (err === 'invalid_token') {
+                            service.logout();
+                        }
+                    } else {
+                        growl.error('Server error:', err);
+                    }
+                });
+
 
                 service.socket.on('connect_error', function(err) {
                     console.error(err);

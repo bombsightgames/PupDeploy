@@ -3,7 +3,7 @@
 </div>
 <div class="text-left">
     <h2><i class="fa fa-users"></i> Users</h2>
-    <div class="container-fluid well">
-        <br><br><br>
+    <div class="container-fluid well" ng-repeat="(index, user) in vm.users">
+        {{user.username}}: {{user.email}}
     </div>
 </div>

@@ -29,6 +29,26 @@ textarea {
     font-family: "Trebuchet MS", Helvetica, sans-serif
 }
 
+@media only screen and (min-width: 800px) {
+    .header-title img {
+        height: 50px;
+        margin-top: -5px;
+        margin-right: -4px;
+        padding-left: 8px;
+    }
+}
+
+@media only screen and (max-width: 800px) {
+    .header-title img {
+        height: 50px;
+        margin-top: -5px;
+        margin-left: -15px;
+        margin-right: -8px;
+        padding-left: 0px;
+    }
+}
+
+
 .header-title:hover {
     color: white;
     text-decoration: none;
@@ -49,19 +69,10 @@ textarea {
     text-decoration: none;
 }
 
-
 .bg {
     margin: 5px;
     padding: 6px;
 }
-
-.header-title img {
-    height: 50px;
-    margin-top: -5px;
-    margin-right: -4px;
-    padding-left: 8px;
-}
-
 .well-header {
     font-size: 25px;
 }

@@ -1,7 +1,7 @@
 angular.module('app').controller('ProjectListController', function($scope, $location, growl, UserService) {
     var vm = this;
 
-    vm.refreshProjects = function() {
+    vm.refresh = function() {
         UserService.socket.emit('project_list', {}, function(err, projects) {
             if (err) {
                 growl.error(err);
@@ -11,7 +11,7 @@ angular.module('app').controller('ProjectListController', function($scope, $loca
             }
         });
     };
-    vm.refreshProjects();
+    vm.refresh();
 
     vm.viewProject = function(id) {
         $location.path('/projects/view/' + id);

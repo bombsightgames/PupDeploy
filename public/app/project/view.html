@@ -13,9 +13,6 @@
             <button class="btn btn-primary" ng-click="vm.editProject()" ng-disabled="vm.project.status === 'running'">
                 <i class="fa fa-edit"></i> Configure
             </button>
-            <button class="btn btn-danger" ng-click="vm.deleteProject()" ng-disabled="project.status === 'running'">
-                <i class="fa fa-close"></i> Delete
-            </button>
         </div>
     </div>
     <h3 ng-if="vm.project.error" class="bg bg-danger text-danger">

@@ -85,13 +85,41 @@
         </div>
     </div>
     <br>
-    <div class="text-right">
-        <a class="btn btn-danger" href="/projects">
-            <i class="fa fa-close"></i> Cancel
-        </a>
-        <button class="btn btn-success" ng-click="vm.save()">
-            <i class="fa fa-save"></i> Save Project
-        </button>
+    <div class="row visible-xs">
+        <div class="col-md-4 text-center">
+            <a class="btn btn-danger" href="/projects">
+                <i class="fa fa-close"></i> Cancel
+            </a>
+            <button class="btn btn-success" ng-click="vm.save()">
+                <i class="fa fa-save"></i> Save Project
+            </button>
+        </div>
+        <br><br>
+        <div class="col-md-8 text-center">
+            <button class="btn btn-danger" ng-click="vm.deleteProject()" ng-disabled="project.status === 'running'">
+                <i class="fa fa-exclamation-triangle"></i> Delete Project <i class="fa fa-exclamation-triangle"></i>
+            </button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-2"></div>
+        <div class="col-xs-10">
+            <div class="row hidden-xs">
+                <div class="col-sm-8 text-left">
+                    <button class="btn btn-danger" ng-click="vm.deleteProject()" ng-disabled="project.status === 'running'">
+                        <i class="fa fa-exclamation-triangle"></i> Delete Project <i class="fa fa-exclamation-triangle"></i>
+                    </button>
+                </div>
+                <div class="col-sm-4 text-right">
+                    <a class="btn btn-danger" href="/projects">
+                        <i class="fa fa-close"></i> Cancel
+                    </a>
+                    <button class="btn btn-success" ng-click="vm.save()">
+                        <i class="fa fa-save"></i> Save Project
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
     <br>
 </div>

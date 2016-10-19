@@ -1,0 +1,102 @@
+<div class="text-left">
+    <h2><i class="fa fa-gears"></i> Setup Wizard</h2>
+
+    <div class="progress">
+        <div class="progress-bar" role="progressbar" style="width:{{(vm.step/vm.maxSteps)*100}}%;"></div>
+    </div>
+    <div class="container-fluid well" ng-if="vm.step == 0">
+        <p>It looks like you are setting up PupDeploy for the first time, lets get started!</p>
+        <br>
+        <div class="row">
+            <div class="col-xs-6 text-left"></div>
+            <div class="col-xs-6 text-right">
+                <button class="btn btn-success" ng-click="vm.nextStep()">
+                    Next <i class="fa fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid well" ng-if="vm.step == 1">
+        <p>We need to set up an admin user that will have full access to everything.</p>
+        <br>
+        <div class="row text-center">
+            <div class="col-md-4"></div>
+            <fieldset class="col-md-4 text-left">
+                <div class="form-group">
+                    <label>Username:</label>
+                    <input class="form-control" ng-model="vm.admin.username" type="text" autofocus="">
+                </div>
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input class="form-control" ng-model="vm.admin.email" type="email">
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input class="form-control" ng-model="vm.admin.password" type="password">
+                </div>
+                <div class="form-group">
+                    <label>Retype Password:</label>
+                    <input class="form-control" ng-model="vm.admin.retypePassword" type="password">
+                </div>
+            </fieldset>
+            <div class="col-md-4"></div>
+        </div>
+        <br><br>
+        <div class="row">
+            <div class="col-xs-6 text-left">
+                <button class="btn btn-danger" ng-click="vm.previousStep()">
+                    <i class="fa fa-arrow-left"></i> Back
+                </button>
+            </div>
+            <div class="col-xs-6 text-right">
+                <button class="btn btn-success" ng-click="vm.nextStep()">
+                    Next <i class="fa fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid well" ng-if="vm.step == 2">
+        <p>We also need to define the global configurations.</p>
+        <br>
+        <p>Though there aren't actually any yet...</p>
+        <br><br>
+        <div class="row">
+            <div class="col-xs-6 text-left">
+                <button class="btn btn-danger" ng-click="vm.previousStep()">
+                    <i class="fa fa-arrow-left"></i> Back
+                </button>
+            </div>
+            <div class="col-xs-6 text-right">
+                <button class="btn btn-success" ng-click="vm.nextStep()">
+                    Finish <i class="fa fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid well" ng-if="vm.step == vm.maxSteps">
+        <div class="text-center" ng-if="!vm.setupDone">
+            <h3>Finishing setup...</h3>
+            <br>
+            <i class="fa fa-refresh fa-spin" style="font-size:82px;"></i>
+            <br><br><br>
+        </div>
+        <div class="text-center" ng-if="vm.setupDone && !vm.setupError">
+            <h3>Setup complete!</h3>
+            <p>We hope you enjoy using PupDeploy.</p>
+            <br><br>
+            <div>
+                <button class="btn btn-success" ng-click="vm.finish()">
+                    <i class="fa fa-sign-in"></i> Go to Login
+                </button>
+            </div>
+        </div>
+        <div class="text-center" ng-if="vm.setupDone && vm.setupError">
+            <h3>Uh oh!</h3>
+            <p>There was an error finishing the setup:</p>
+            <p class="bg-danger text-danger">Error: {{vm.setupError}}</p>
+        </div>
+    </div>
+</div>

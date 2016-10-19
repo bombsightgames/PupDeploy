@@ -28,6 +28,19 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
         }
     };
 
+    vm.deleteProject = function() {
+        if (confirm('Are you sure you want to delete this project?')) {
+            UserService.socket.emit('project_delete', id, function(err) {
+                if (err) {
+                    growl.error(err);
+                } else {
+                    growl.success('Project deleted successfully.');
+                    $location.path('/projects');
+                }
+            });
+        }
+    };
+
     vm.save = function() {
         UserService.socket.emit('project_update', vm.project, function(err) {
             if (err) {
@@ -45,7 +58,7 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
     };
 
     vm.loading = true;
-    if (id){
+    if (id) {
         UserService.socket.emit('project_get', id, function(err, project) {
             if (err) {
                 growl.error(err);
