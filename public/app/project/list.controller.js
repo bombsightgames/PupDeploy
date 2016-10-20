@@ -38,7 +38,7 @@ angular.module('app').controller('ProjectListController', function($scope, $loca
                     growl.error(err);
                 } else {
                     growl.success('Project deleted successfully.');
-                    vm.refreshProjects();
+                    vm.refresh();
                 }
             });
         }

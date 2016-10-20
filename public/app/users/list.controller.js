@@ -1,4 +1,4 @@
-angular.module('app').controller('UsersListController', function($scope, UserService) {
+angular.module('app').controller('UsersListController', function($scope, UserService, growl) {
     var vm = this;
 
     vm.refresh = function() {
@@ -12,4 +12,17 @@ angular.module('app').controller('UsersListController', function($scope, UserSer
         });
     };
     vm.refresh();
+
+    vm.deleteUser = function(id) {
+        if (confirm('Are you sure you want to delete this user?')) {
+            UserService.socket.emit('user_delete', id, function(err) {
+                if (err) {
+                    growl.error(err);
+                } else {
+                    growl.success('User deleted successfully.');
+                    vm.refresh();
+                }
+            });
+        }
+    };
 });

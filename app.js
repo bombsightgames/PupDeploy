@@ -152,29 +152,35 @@ function sendProjectNotifications(id, types, title, text, pretext, color, link) 
         if (err) {
             console.error('Failed to get project for notification sending:', err);
         } else {
-            if (projec && project.settings.enableNotifications) {
-                _.forEach(project.notifications, function(notification) {
-                    console.info('Sending notification:', project.name, notification.type, title, text);
-                    if (notification.type === 'slack') {
-                        slackRequest(notification.slack.incoming_webhook.url, {
-                            attachments: [
-                                {
-                                    fallback: title + ': ' + text,
-                                    color: color,
-                                    pretext: pretext,
-                                    title: title,
-                                    title_link: link,
-                                    text: text,
-                                    ts: Date.now()/1000
-                                }
-                            ]
-                        }).catch(function(err) {
-                            console.error('Failed to send notification:', project.name, notification.type, title, text, err);
-                        });
-                    } else if (notification.type === 'email') {
-                        //TODO: Email notifications.
-                    }
-                });
+            if (project) {
+                if (project.settings.enableNotifications) {
+                    _.forEach(project.notifications, function (notification) {
+                        console.info('Sending notification:', project.name, notification.type, title, text);
+                        if (notification.type === 'slack') {
+                            slackRequest(notification.slack.incoming_webhook.url, {
+                                attachments: [
+                                    {
+                                        fallback: title + ': ' + text,
+                                        color: color,
+                                        pretext: pretext,
+                                        title: title,
+                                        title_link: link,
+                                        text: text,
+                                        ts: Date.now() / 1000
+                                    }
+                                ]
+                            }).catch(function (err) {
+                                console.error('Failed to send notification:', project.name, notification.type, title, text, err);
+                            });
+                        } else if (notification.type === 'email') {
+                            //TODO: Email notifications.
+                        } else if (notification.type === 'web') {
+                            //TODO: Web notifications.
+                        } else if (notification.type === 'postToUrl') {
+                            //TODO: Post URL notifications.
+                        }
+                    });
+                }
             } else {
                 console.error('Failed to find project for notification sending.');
             }
@@ -204,27 +210,30 @@ function updateProjectStatus(socket, id, status, error) {
     });
 }
 
-function createUser(username, password, email) {
+function updateUser(id, username, password, email) {
     var defer = Q.defer();
 
     db.users.count({username: username}, function(err, count) {
         if (err) {
-            console.error('Failed to get user count for create user:', err);
-            defer.reject('Failed to create user.');
+            console.error('Failed to get user count for update user:', err);
+            defer.reject('Failed to save user.');
         } else {
-            if (count > 0) {
+            if (!id && count > 0) {
                 defer.reject('A user with that username already exists.');
             } else {
-                var hash = bcrypt.hashSync(password);
-
-                db.users.insert({
+                var user = {
                     username: username,
-                    password: hash,
                     email: email
-                }, function(err, user) {
+                };
+
+                if (user.username) {
+                    user.password = bcrypt.hashSync(password);
+                }
+
+                db.users.update({_id: id}, user, {upsert: true}, function(err, user) {
                     if (err) {
-                        console.error('Failed to create user:', err);
-                        defer.reject('Failed to create user.');
+                        console.error('Failed to update user:', err);
+                        defer.reject('Failed to save user.');
                     } else {
                         defer.resolve(user);
                     }
@@ -356,10 +365,41 @@ function init() {
                 notifications: notifications
             }, {
                 upsert: true
-            }, function(err, doc) {
+            }, function(err) {
                 if (err) {
                     console.error('Failed to create project:', err);
                     cb('Failed to create project.');
+                } else {
+                    cb();
+                }
+            });
+        });
+
+        socket.on('user_get', function(id, cb) {
+            db.users.findOne({_id: id}, function(err, user) {
+                if (err) {
+                    console.error('Failed to get user:', err);
+                    cb('Failed to get user.');
+                } else {
+                    if (user) {
+                        cb(null, {
+                            _id: user._id,
+                            username: user.username,
+                            email: user.email
+                        });
+                    } else {
+                        cb('User not found.');
+                    }
+                }
+            });
+        });
+
+        socket.on('user_delete', function(id, cb) {
+            //TODO: Implement super admin and ensure it can not be deleted.
+            db.users.remove({_id: id}, function(err) {
+                if (err) {
+                    console.error('Failed to delete user:', err);
+                    cb('Failed to delete user.');
                 } else {
                     cb();
                 }
@@ -376,6 +416,7 @@ function init() {
 
                     _.forEach(users, function(user) {
                         filteredUsers.push({
+                            _id: user._id,
                             username: user.username,
                             email: user.email
                         });
@@ -383,6 +424,14 @@ function init() {
 
                     cb(null, filteredUsers);
                 }
+            });
+        });
+
+        socket.on('user_update', function(data, cb) {
+            updateUser(data._id, data.username, data.password, data.email).then(function() {
+                cb();
+            }, function(err) {
+                cb(err);
             });
         });
     });
@@ -455,7 +504,7 @@ function init() {
         if (setupMode) {
             if (req.body.admin) {
                 var admin = req.body.admin;
-                createUser(admin.username, admin.password, admin.email).then(function() {
+                updateUser(null, admin.username, admin.password, admin.email).then(function() {
                     setupMode = false;
                     res.send({success: true});
                 }, function(err) {
@@ -465,7 +514,7 @@ function init() {
                 res.send({success: false, message: 'Invalid data.'});
             }
         } else {
-            res.send({success: false, message: 'Server is not in setup mode.'});;
+            res.send({success: false, message: 'Server is not in setup mode.'});
         }
     });
 

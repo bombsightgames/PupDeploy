@@ -2,51 +2,69 @@
     <a href="/"><i class="fa fa-tachometer"></i> Dashboard</a> > <a href="/users"><i class="fa fa-users"></i> Users</a> > <i class="fa fa-edit"></i> {{vm.id ? 'Edit' : 'New'}}
 </div>
 <div class="text-left" class="form-group" ng-if="!vm.loading">
-    <h2><i class="fa fa-user"></i> {{vm.id ? 'Edit User' : 'New User'}}</h2>
+    <h2><i class="fa fa-users"></i> {{vm.id ? 'Edit User' : 'New User'}}</h2>
     <br>
-    <div class="row">
-        <div class="col-md-2 well-header">General</div>
-        <div class="col-md-10 container-fluid well">
-            <label>Name</label>
-            <input class="form-control" type="text" ng-model="vm.user.username">
-        </div>
-    </div>
-    <br>
-    <div class="row visible-xs">
-        <div class="col-md-4 text-center">
-            <a class="btn btn-danger" href="/users">
-                <i class="fa fa-close"></i> Cancel
-            </a>
-            <button class="btn btn-success" ng-click="vm.save()">
-                <i class="fa fa-save"></i> Save Project
-            </button>
-        </div>
-        <br><br>
-        <div class="col-md-8 text-center">
-            <button ng-if="vm.id" class="btn btn-danger" ng-click="vm.deleteUser()">
-                <i class="fa fa-exclamation-triangle"></i> Delete User <i class="fa fa-exclamation-triangle"></i>
-            </button>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-xs-2"></div>
-        <div class="col-xs-10">
-            <div class="row hidden-xs">
-                <div class="col-sm-8 text-left">
-                    <button ng-if="vm.id" class="btn btn-danger" ng-click="vm.deleteUser()">
-                        <i class="fa fa-exclamation-triangle"></i> Delete User <i class="fa fa-exclamation-triangle"></i>
+    <form autocomplete="off" ng-submit="vm.save()">
+        <div class="row">
+            <div class="col-md-2 well-header">General</div>
+            <div class="col-md-10 container-fluid well">
+                <label>Username</label>
+                <input class="form-control" type="text" ng-model="vm.user.username" ng-disabled="vm.id" required="">
+                <br>
+                <div ng-if="vm.id && !vm.changePassword">
+                    <button class="btn btn-primary" ng-click="vm.changePassword=true">
+                        <i class="fa fa-edit"></i> Change Password
                     </button>
                 </div>
-                <div class="col-sm-4 text-right">
-                    <a class="btn btn-danger" href="/users">
-                        <i class="fa fa-close"></i> Cancel
-                    </a>
-                    <button class="btn btn-success" ng-click="vm.save()">
-                        <i class="fa fa-save"></i> Save User
+                <div ng-if="!vm.id || vm.changePassword">
+                    <label>Password</label>
+                    <button class="btn btn-danger btn-xs" ng-if="vm.id" ng-click="vm.changePassword=false">
+                        <i class="fa fa-close"></i> Cancel Change
                     </button>
+                    <input class="form-control" type="password" ng-model="vm.user.password" required="">
+                </div>
+                <br>
+                <label>Email</label>
+                <input class="form-control" type="email" ng-model="vm.user.email" required="">
+            </div>
+        </div>
+        <br>
+        <div class="row visible-xs">
+            <div class="col-md-4 text-center">
+                <a class="btn btn-danger" href="/users">
+                    <i class="fa fa-close"></i> Cancel
+                </a>
+                <button class="btn btn-success" type="submit">
+                    <i class="fa fa-save"></i> Save Project
+                </button>
+            </div>
+            <br><br>
+            <div class="col-md-8 text-center">
+                <button ng-if="vm.id" class="btn btn-danger" ng-click="vm.deleteUser()">
+                    <i class="fa fa-exclamation-triangle"></i> Delete User <i class="fa fa-exclamation-triangle"></i>
+                </button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-2"></div>
+            <div class="col-xs-10">
+                <div class="row hidden-xs">
+                    <div class="col-sm-8 text-left">
+                        <button ng-if="vm.id" class="btn btn-danger" ng-click="vm.deleteUser()">
+                            <i class="fa fa-exclamation-triangle"></i> Delete User <i class="fa fa-exclamation-triangle"></i>
+                        </button>
+                    </div>
+                    <div class="col-sm-4 text-right">
+                        <a class="btn btn-danger" href="/users">
+                            <i class="fa fa-close"></i> Cancel
+                        </a>
+                        <button class="btn btn-success" type="submit">
+                            <i class="fa fa-save"></i> Save User
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </form>
     <br>
 </div>

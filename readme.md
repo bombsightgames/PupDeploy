@@ -2,13 +2,14 @@
 
 A simple and lightweight deployment utility built with Node and Angular.
 
-## TODO
+## Planned Features
 
 - Setup wizard
 - Multiple server deployment
 - Deployment notifications
-- Improve deployment logs
+- Deployment logs
 - Server monitoring
 - User settings
 - User management
+- Plugin System
 - RESTful API

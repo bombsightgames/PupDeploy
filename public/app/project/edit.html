@@ -88,9 +88,17 @@
                             <select class="form-control" id="notificationType" ng-model="vm.project.notifications[index].type">
                                 <option value="email">Email</option>
                                 <option value="slack">Slack</option>
+                                <option value="web">PupDeploy</option>
+                                <option value="postToUrl">Post to URL</option>
                             </select>
                         </div>
                         <div class="col-md-8 text-center">
+                            <div ng-if="vm.project.notifications[index].type == 'web'">
+                                <p>Project users will be notified via growl messages on any PupDeploy page.</p>
+                            </div>
+                            <div ng-if="vm.project.notifications[index].type == 'postToUrl'">
+                                <p><i class="fa fa-close"></i> Not implemented</p>
+                            </div>
                             <div ng-if="vm.project.notifications[index].type == 'email'">
                                 <p>Project users will be notified via email when the project is deployed.</p>
                             </div>
