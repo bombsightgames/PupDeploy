@@ -52,6 +52,12 @@ angular.module('app', [
         }).when('/users', {
             controller: 'UsersListController as vm',
             templateUrl: '/app/users/list.html'
+        }).when('/users/new', {
+            controller: 'UsersEditController as vm',
+            templateUrl: '/app/users/edit.html'
+        }).when('/users/edit/:id', {
+            controller: 'UsersEditController as vm',
+            templateUrl: '/app/users/edit.html'
         }).otherwise({
             redirectTo: '/'
         });

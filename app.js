@@ -152,7 +152,7 @@ function sendProjectNotifications(id, types, title, text, pretext, color, link) 
         if (err) {
             console.error('Failed to get project for notification sending:', err);
         } else {
-            if (project) {
+            if (projec && project.settings.enableNotifications) {
                 _.forEach(project.notifications, function(notification) {
                     console.info('Sending notification:', project.name, notification.type, title, text);
                     if (notification.type === 'slack') {

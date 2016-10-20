@@ -6,4 +6,9 @@
     <div class="container-fluid well" ng-repeat="(index, user) in vm.users">
         {{user.username}}: {{user.email}}
     </div>
+    <div class="text-right">
+        <a class="btn btn-success" href="/users/new">
+            <i class="fa fa-plus"></i> New User
+        </a>
+    </div>
 </div>

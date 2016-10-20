@@ -1,0 +1,52 @@
+<div class="breadcrumb">
+    <a href="/"><i class="fa fa-tachometer"></i> Dashboard</a> > <a href="/users"><i class="fa fa-users"></i> Users</a> > <i class="fa fa-edit"></i> {{vm.id ? 'Edit' : 'New'}}
+</div>
+<div class="text-left" class="form-group" ng-if="!vm.loading">
+    <h2><i class="fa fa-user"></i> {{vm.id ? 'Edit User' : 'New User'}}</h2>
+    <br>
+    <div class="row">
+        <div class="col-md-2 well-header">General</div>
+        <div class="col-md-10 container-fluid well">
+            <label>Name</label>
+            <input class="form-control" type="text" ng-model="vm.user.username">
+        </div>
+    </div>
+    <br>
+    <div class="row visible-xs">
+        <div class="col-md-4 text-center">
+            <a class="btn btn-danger" href="/users">
+                <i class="fa fa-close"></i> Cancel
+            </a>
+            <button class="btn btn-success" ng-click="vm.save()">
+                <i class="fa fa-save"></i> Save Project
+            </button>
+        </div>
+        <br><br>
+        <div class="col-md-8 text-center">
+            <button ng-if="vm.id" class="btn btn-danger" ng-click="vm.deleteUser()">
+                <i class="fa fa-exclamation-triangle"></i> Delete User <i class="fa fa-exclamation-triangle"></i>
+            </button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-2"></div>
+        <div class="col-xs-10">
+            <div class="row hidden-xs">
+                <div class="col-sm-8 text-left">
+                    <button ng-if="vm.id" class="btn btn-danger" ng-click="vm.deleteUser()">
+                        <i class="fa fa-exclamation-triangle"></i> Delete User <i class="fa fa-exclamation-triangle"></i>
+                    </button>
+                </div>
+                <div class="col-sm-4 text-right">
+                    <a class="btn btn-danger" href="/users">
+                        <i class="fa fa-close"></i> Cancel
+                    </a>
+                    <button class="btn btn-success" ng-click="vm.save()">
+                        <i class="fa fa-save"></i> Save User
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+</div>

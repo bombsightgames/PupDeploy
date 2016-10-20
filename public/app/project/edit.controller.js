@@ -73,7 +73,6 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
         if (data.error) {
             growl.error(data.error);
         } else {
-            console.log('Slack setup!', data);
             for (var i=0; i<vm.project.notifications.length; i++) {
                 var notification = vm.project.notifications[i];
                 if (data.token == notification.token) {
@@ -104,7 +103,6 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
                 $location.path('/projects');
             } else {
                 vm.project = project;
-                vm.notifications = [];
             }
 
             vm.loading = false;
