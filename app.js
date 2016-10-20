@@ -119,7 +119,7 @@ function bsgRequest(path, data) {
     var defer = Q.defer();
 
     request.post({
-        url: 'http://pupdeploy.bombsightgames.com/api' + path,
+        url: 'https://pupdeploy.bombsightgames.com/api' + path,
         body: data,
         json: true,
         headers: {
@@ -134,12 +134,17 @@ function bsgRequest(path, data) {
                 console.warn('BSG request returned a warning:', body.warning);
             }
 
-            if (body.ok) {
-                console.info('BSG response:', body);
-                defer.resolve(body);
+            if (body) {
+                if (body === 'ok' || body.ok) {
+                    console.info('BSG response:', body);
+                    defer.resolve(body);
+                } else {
+                    console.error('BSG request returned an error:', body.error);
+                    defer.reject(body.error);
+                }
             } else {
-                console.error('BSG request returned an error:', body.error);
-                defer.reject(body.error);
+                console.warn('BSG request returned an empty body.');
+                defer.resolve();
             }
         }
     });
@@ -295,6 +300,9 @@ function init() {
                     cb('Failed to get project.');
                 } else {
                     if (project) {
+                        project.auth = {
+                            type: project.auth.type
+                        };
                         cb(null, project);
                     } else {
                         cb('Project not found.');
@@ -476,11 +484,9 @@ function init() {
                 console.error('Slack setup error:', req.query.error);
                 res.send('<script>window.close();</script>');
             } else {
-                console.log(req.query.code);
-                console.log(req.query.state);
                 bsgRequest('/token', {
                     code: req.query.code,
-                    redirect: 'http://pupdeploy.bombsightgames.com/api/' + encodeURIComponent(req.protocol + '://' + req.get('host') + '/slack')
+                    redirect: 'https://pupdeploy.bombsightgames.com/api/' + encodeURIComponent(req.protocol + '://' + req.get('host') + '/slack')
                 }).then(function(data) {
                     io.emit('slack_setup', {
                         token: req.query.state,

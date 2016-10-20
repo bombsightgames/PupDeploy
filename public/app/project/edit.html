@@ -4,162 +4,176 @@
 <div class="text-left" class="form-group" ng-if="!vm.loading">
     <h2><i class="fa fa-folder-open"></i> {{vm.id ? 'Configure Project' : 'New Project'}}</h2>
     <br>
-    <div class="row">
-        <div class="col-md-2 well-header">General</div>
-        <div class="col-md-10 container-fluid well">
-            <label>Name</label>
-            <input class="form-control" type="text" ng-model="vm.project.name">
-            <br>
-            <label><input type="checkbox" ng-model="vm.project.settings.haltOnFailure"> Halt deploy on step failure.</label>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-2 well-header">Authentication</div>
-        <div class="col-md-10 container-fluid well">
-            <div class="form-group" style="max-width:250px;">
-                <label>Username:</label>
-                <input class="form-control" type="text" ng-model="vm.project.auth.username" autocomplete="off">
+    <form autocomplete="off" ng-submit="vm.save()">
+        <div class="row">
+            <div class="col-md-2 well-header">General</div>
+            <div class="col-md-10 container-fluid well">
+                <label>Name</label>
+                <input class="form-control" type="text" ng-model="vm.project.name" required="">
                 <br>
-                <label for="authType">Authentication Type:</label>
-                <select class="form-control" id="authType" ng-model="vm.project.auth.type">
-                    <option value="password">Password</option>
-                    <option value="key">SSH Key</option>
-                </select>
-            </div>
-            <div ng-if="vm.project.auth.type == 'password'">
-                <label>Password:</label>
-                <input class="form-control" type="password" ng-model="vm.project.auth.password" autocomplete="off">
-            </div>
-            <div ng-if="vm.project.auth.type == 'key'">
-                <label>SSH Key:</label>
-                <textarea class="form-control" rows="4" ng-model="vm.project.auth.key"></textarea>
+                <label><input type="checkbox" ng-model="vm.project.settings.haltOnFailure"> Halt deploy on step failure.</label>
             </div>
         </div>
-    </div>
-    <div class="row">
-        <div class="col-md-2 well-header">Servers</div>
-        <div class="col-md-10 container-fluid well">
-            <div ng-repeat="(index, server) in vm.project.servers">
-                <label>Server #{{index+1}}</label> <button ng-click="vm.removeServer(index)" class="btn btn-danger btn-xs" style="float:right;"><i class="fa fa-close"></i></button>
-                <input class="form-control" type="text" ng-model="vm.project.servers[index].host">
-                <br>
-            </div>
-            <div class="text-right">
-                <button class="btn btn-success" ng-click="vm.addServer()">
-                    <i class="fa fa-plus"></i> Add Server
-                </button>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-2 well-header">Steps</div>
-        <div class="col-md-10 container-fluid well">
-            <div ng-repeat="(index, step) in vm.project.steps">
-                <label>Step #{{index+1}}</label> <button ng-click="vm.removeStep(index)" class="btn btn-danger btn-xs" style="float:right;"><i class="fa fa-close"></i></button>
-                <textarea class="form-control" rows="4" ng-model="vm.project.steps[index].commands"></textarea>
-                <br>
-            </div>
-            <div class="text-right">
-                <button class="btn btn-success" ng-click="vm.addStep()">
-                    <i class="fa fa-plus"></i> Add Step
-                </button>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-2 well-header">Monitoring</div>
-        <div class="col-md-10 container-fluid well">
-            <label><input type="checkbox" ng-model="vm.project.settings.enableMonitoring"> Enable server monitoring.</label>
-            <div ng-if="vm.project.settings.enableMonitoring">
-                <i class="fa fa-close"></i> Not implemented yet.
+        <div class="row">
+            <div class="col-md-2 well-header">Authentication</div>
+            <div class="col-md-10 container-fluid well">
+                <div ng-if="vm.id && !vm.changeAuth">
+                    <label>Current Authentication Type:</label> {{vm.project.auth.type}}<br>
+                    <button class="btn btn-primary" ng-click="vm.changeAuth=vm.project.auth.type;">
+                        <i class="fa fa-edit"></i> Change Authentication
+                    </button>
+                </div>
+                <div ng-if="!vm.id || vm.changeAuth">
+                    <div class="form-group" style="max-width:250px;">
+                        <button class="btn btn-danger btn-xs" ng-if="vm.id" ng-click="vm.project.auth.type=vm.changeAuth; vm.changeAuth=null">
+                            <i class="fa fa-close"></i> Cancel Change
+                        </button>
+                        <br><br>
+                        <label>Username:</label>
+                        <input class="form-control" type="text" ng-model="vm.project.auth.username" required="">
+                        <br>
+                        <label for="authType">Authentication Type:</label>
+                        <select class="form-control" id="authType" ng-model="vm.project.auth.type" required="">
+                            <option value="password">Password</option>
+                            <option value="key">SSH Key</option>
+                        </select>
+                    </div>
+                    <div ng-if="vm.project.auth.type == 'password'">
+                        <label>Password:</label>
+                        <input class="form-control" type="password" ng-model="vm.project.auth.password" required="">
+                    </div>
+                    <div ng-if="vm.project.auth.type == 'key'">
+                        <label>SSH Key:</label>
+                        <textarea class="form-control" rows="4" ng-model="vm.project.auth.key" required=""></textarea>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="row">
-        <div class="col-md-2 well-header">Notifications</div>
-        <div class="col-md-10 container-fluid well">
-            <label><input type="checkbox" ng-model="vm.project.settings.enableNotifications"> Enable notifications.</label>
-            <div ng-if="vm.project.settings.enableNotifications">
-                <br>
-                <div class="form-group" ng-repeat="(index, notification) in vm.project.notifications">
-                    <label for="notificationType">Notification #{{index+1}}:</label><button ng-click="vm.removeNotification(index)" class="btn btn-danger btn-xs" style="float:right;"><i class="fa fa-close"></i></button>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <select class="form-control" id="notificationType" ng-model="vm.project.notifications[index].type">
-                                <option value="email">Email</option>
-                                <option value="slack">Slack</option>
-                                <option value="web">PupDeploy</option>
-                                <option value="postToUrl">Post to URL</option>
-                            </select>
-                        </div>
-                        <div class="col-md-8 text-center">
-                            <div ng-if="vm.project.notifications[index].type == 'web'">
-                                <p>Project users will be notified via growl messages on any PupDeploy page.</p>
+        <div class="row">
+            <div class="col-md-2 well-header">Servers</div>
+            <div class="col-md-10 container-fluid well">
+                <div ng-repeat="(index, server) in vm.project.servers">
+                    <label>Server #{{index+1}}</label> <button type="button" ng-click="vm.removeServer(index)" class="btn btn-danger btn-xs" style="float:right;"><i class="fa fa-close"></i></button>
+                    <input class="form-control" type="text" ng-model="vm.project.servers[index].host" required="">
+                    <br>
+                </div>
+                <div class="text-right">
+                    <button class="btn btn-success" ng-click="vm.addServer()" type="button">
+                        <i class="fa fa-plus"></i> Add Server
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2 well-header">Steps</div>
+            <div class="col-md-10 container-fluid well">
+                <div ng-repeat="(index, step) in vm.project.steps">
+                    <label>Step #{{index+1}}</label> <button type="button" ng-click="vm.removeStep(index)" class="btn btn-danger btn-xs" style="float:right;"><i class="fa fa-close"></i></button>
+                    <textarea class="form-control" rows="4" ng-model="vm.project.steps[index].commands" required=""></textarea>
+                    <br>
+                </div>
+                <div class="text-right">
+                    <button class="btn btn-success" ng-click="vm.addStep()" type="button">
+                        <i class="fa fa-plus"></i> Add Step
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2 well-header">Monitoring</div>
+            <div class="col-md-10 container-fluid well">
+                <label><input type="checkbox" ng-model="vm.project.settings.enableMonitoring"> Enable server monitoring.</label>
+                <div ng-if="vm.project.settings.enableMonitoring">
+                    <i class="fa fa-close"></i> Not implemented yet.
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2 well-header">Notifications</div>
+            <div class="col-md-10 container-fluid well">
+                <label><input type="checkbox" ng-model="vm.project.settings.enableNotifications"> Enable notifications.</label>
+                <div ng-if="vm.project.settings.enableNotifications">
+                    <br>
+                    <div class="form-group" ng-repeat="(index, notification) in vm.project.notifications">
+                        <label for="notificationType">Notification #{{index+1}}:</label><button type="button" ng-click="vm.removeNotification(index)" class="btn btn-danger btn-xs" style="float:right;"><i class="fa fa-close"></i></button>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <select class="form-control" id="notificationType" ng-model="vm.project.notifications[index].type">
+                                    <option value="email">Email</option>
+                                    <option value="slack">Slack</option>
+                                    <option value="web">PupDeploy</option>
+                                    <option value="postToUrl">Post to URL</option>
+                                </select>
                             </div>
-                            <div ng-if="vm.project.notifications[index].type == 'postToUrl'">
-                                <p><i class="fa fa-close"></i> Not implemented</p>
-                            </div>
-                            <div ng-if="vm.project.notifications[index].type == 'email'">
-                                <p>Project users will be notified via email when the project is deployed.</p>
-                            </div>
-                            <div ng-if="vm.project.notifications[index].type == 'slack'">
-                                <div ng-if="notification.slack">
-                                    Posting to team {{notification.slack.team_name}} in channel {{notification.slack.incoming_webhook.channel}}.
+                            <div class="col-md-8 text-center">
+                                <div ng-if="vm.project.notifications[index].type == 'web'">
+                                    <p>Project users will be notified via growl messages on any PupDeploy page.</p>
                                 </div>
-                                <div ng-if="!notification.slack">
-                                    <a href="#" ng-click="vm.authSlack(notification)">
-                                        <img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" />
-                                    </a>
+                                <div ng-if="vm.project.notifications[index].type == 'postToUrl'">
+                                    <p><i class="fa fa-close"></i> Not implemented</p>
+                                </div>
+                                <div ng-if="vm.project.notifications[index].type == 'email'">
+                                    <p>Project users will be notified via email when the project is deployed.</p>
+                                </div>
+                                <div ng-if="vm.project.notifications[index].type == 'slack'">
+                                    <div ng-if="notification.slack">
+                                        Posting to team {{notification.slack.team_name}} in channel {{notification.slack.incoming_webhook.channel}}.
+                                    </div>
+                                    <div ng-if="!notification.slack">
+                                        <a href="#" ng-click="vm.authSlack(notification)">
+                                            <img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" />
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <br>
-                <div class="text-right">
-                    <button class="btn btn-success" ng-click="vm.addNotification()">
-                        <i class="fa fa-plus"></i> Add Notification
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <br>
-    <div class="row visible-xs">
-        <div class="col-md-4 text-center">
-            <a class="btn btn-danger" href="/projects">
-                <i class="fa fa-close"></i> Cancel
-            </a>
-            <button class="btn btn-success" ng-click="vm.save()">
-                <i class="fa fa-save"></i> Save Project
-            </button>
-        </div>
-        <br><br>
-        <div class="col-md-8 text-center">
-            <button ng-if="vm.id" class="btn btn-danger" ng-click="vm.deleteProject()" ng-disabled="project.status === 'running'">
-                <i class="fa fa-exclamation-triangle"></i> Delete Project <i class="fa fa-exclamation-triangle"></i>
-            </button>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-xs-2"></div>
-        <div class="col-xs-10">
-            <div class="row hidden-xs">
-                <div class="col-sm-8 text-left">
-                    <button ng-if="vm.id" class="btn btn-danger" ng-click="vm.deleteProject()" ng-disabled="project.status === 'running'">
-                        <i class="fa fa-exclamation-triangle"></i> Delete Project <i class="fa fa-exclamation-triangle"></i>
-                    </button>
-                </div>
-                <div class="col-sm-4 text-right">
-                    <a class="btn btn-danger" href="/projects">
-                        <i class="fa fa-close"></i> Cancel
-                    </a>
-                    <button class="btn btn-success" ng-click="vm.save()">
-                        <i class="fa fa-save"></i> Save Project
-                    </button>
+                    <br>
+                    <div class="text-right">
+                        <button class="btn btn-success" ng-click="vm.addNotification()" type="button">
+                            <i class="fa fa-plus"></i> Add Notification
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+        <br>
+        <div class="row visible-xs">
+            <div class="col-md-4 text-center">
+                <a class="btn btn-danger" type="button" href="/projects">
+                    <i class="fa fa-close"></i> Cancel
+                </a>
+                <button class="btn btn-success" type="submit">
+                    <i class="fa fa-save"></i> Save Project
+                </button>
+            </div>
+            <br><br>
+            <div class="col-md-8 text-center">
+                <button ng-if="vm.id" type="button" class="btn btn-danger" ng-click="vm.deleteProject()" ng-disabled="project.status === 'running'">
+                    <i class="fa fa-exclamation-triangle"></i> Delete Project <i class="fa fa-exclamation-triangle"></i>
+                </button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-2"></div>
+            <div class="col-xs-10">
+                <div class="row hidden-xs">
+                    <div class="col-sm-8 text-left">
+                        <button ng-if="vm.id" type="button" class="btn btn-danger" ng-click="vm.deleteProject()" ng-disabled="project.status === 'running'">
+                            <i class="fa fa-exclamation-triangle"></i> Delete Project <i class="fa fa-exclamation-triangle"></i>
+                        </button>
+                    </div>
+                    <div class="col-sm-4 text-right">
+                        <a class="btn btn-danger" href="/projects" type="button">
+                            <i class="fa fa-close"></i> Cancel
+                        </a>
+                        <button class="btn btn-success" type="submit">
+                            <i class="fa fa-save"></i> Save Project
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
     <br>
 </div>

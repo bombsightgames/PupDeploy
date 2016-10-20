@@ -54,6 +54,21 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
     };
 
     vm.save = function() {
+        var invalid = false;
+
+        for (var i=0; i<vm.project.notifications.length; i++) {
+            var notification = vm.project.notifications[i];
+            if (notification.type === 'slack' && !notification.slack) {
+                invalid = true;
+                growl.error('You must click the Add to Slack button to complete a Slack notification.');
+                break;
+            }
+        }
+
+        if (invalid) {
+            return;
+        }
+
         UserService.socket.emit('project_update', vm.project, function(err) {
             if (err) {
                 growl.error(err);
@@ -89,7 +104,8 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
     vm.authSlack = function(notification) {
         notification.token = Math.floor(Math.random()*100000000);
 
-        var slackUrl = 'https://slack.com/oauth/authorize?scope=incoming-webhook&client_id=90733115808.92334895841&state=' + notification.token + '&redirect_uri=' + encodeURIComponent('http://pupdeploy.bombsightgames.com/api/' + window.location.protocol + '//' + window.location.host + '/slack');
+        var redirect = encodeURIComponent('https://pupdeploy.bombsightgames.com/api/' + window.location.protocol + '//' + window.location.host + '/slack');
+        var slackUrl = 'https://slack.com/oauth/authorize?scope=incoming-webhook&client_id=90733115808.92334895841&state=' + notification.token + '&redirect_uri=' + redirect;
         if (notification.token && slackUrl) {
             window.open(slackUrl, '_blank', 'width=600,height=500' + ', top=' + ((window.innerHeight - 500) / 2) + ', left=' + ((window.innerWidth - 600) / 2));
         }

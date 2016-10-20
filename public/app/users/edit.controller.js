@@ -20,6 +20,19 @@ angular.module('app').controller('UsersEditController', function($rootScope, $sc
         });
     };
 
+    vm.deleteUser = function() {
+        if (confirm('Are you sure you want to delete this user?')) {
+            UserService.socket.emit('user_delete', id, function(err) {
+                if (err) {
+                    growl.error(err);
+                } else {
+                    growl.success('User deleted successfully.');
+                    $location.path('/users');
+                }
+            });
+        }
+    };
+
     vm.loading = true;
     if (id) {
         UserService.socket.emit('user_get', id, function(err, user) {
