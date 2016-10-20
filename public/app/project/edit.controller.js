@@ -104,6 +104,7 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
                 $location.path('/projects');
             } else {
                 vm.project = project;
+                vm.notifications = [];
             }
 
             vm.loading = false;

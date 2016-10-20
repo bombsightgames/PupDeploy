@@ -12,12 +12,12 @@ var bcrypt = require('bcrypt-nodejs');
 var Datastore = require('nedb');
 
 process.on('uncaughtException', function(err) {
-    console.error('Uncaught Exception:', err.stack ? err.stack : err);
+    console.error('Uncaught Exception:', (err && err.stack) ? err.stack : err);
     process.exit(1);
 });
 
 process.on('unhandledRejection', function(err) {
-    console.error('Unhandled Rejection:', err, err.stack);
+    console.error('Unhandled Rejection:', (err && err.stack) ? err.stack : err);
     process.exit(1);
 });
 
@@ -60,7 +60,7 @@ db.projects.find({status: 'running'}, function(err, projects) {
         console.error('Failed to get projects on startup:', err);
     } else {
         _.forEach(projects, function(project) {
-            updateProjectStatus(project._id, 'failed', 'PupDeploy server crashed or was shutdown during deployment.');
+            updateProjectStatus(null, project._id, 'failed', 'PupDeploy server crashed or was shutdown during deployment.');
         });
     }
 });
@@ -77,6 +77,132 @@ db.users.count({}, function(err, count) {
 
     init();
 });
+
+function slackRequest(url, data) {
+    var defer = Q.defer();
+
+    request.post({
+        url: url,
+        body: data,
+        json: true,
+        headers: {
+            'Content-Type': 'application/json; charset=utf-8'
+        }
+    }, function (err, res, body) {
+        if (err) {
+            console.error('Slack request failed:', url, err);
+            defer.reject(err);
+        } else {
+            if (body.warning) {
+                console.warn('Slack request returned a warning:', body.warning);
+            }
+
+            if (body) {
+                if (body === 'ok' || body.ok) {
+                    console.info('Slack response:', body);
+                    defer.resolve(body);
+                } else {
+                    console.error('Slack request returned an error:', body.error);
+                    defer.reject(body.error);
+                }
+            } else {
+                console.warn('Slack request returned an empty body.');
+                defer.resolve();
+            }
+        }
+    });
+
+    return defer.promise;
+}
+
+function bsgRequest(path, data) {
+    var defer = Q.defer();
+
+    request.post({
+        url: 'http://pupdeploy.bombsightgames.com/api' + path,
+        body: data,
+        json: true,
+        headers: {
+            'Content-Type': 'application/json; charset=utf-8'
+        }
+    }, function (err, res, body) {
+        if (err) {
+            console.error('BSG request failed:', path, err);
+            defer.reject(err);
+        } else {
+            if (body.warning) {
+                console.warn('BSG request returned a warning:', body.warning);
+            }
+
+            if (body.ok) {
+                console.info('BSG response:', body);
+                defer.resolve(body);
+            } else {
+                console.error('BSG request returned an error:', body.error);
+                defer.reject(body.error);
+            }
+        }
+    });
+
+    return defer.promise;
+}
+
+function sendProjectNotifications(id, types, title, text, pretext, color, link) {
+    db.projects.findOne({_id: id}, function(err, project) {
+        if (err) {
+            console.error('Failed to get project for notification sending:', err);
+        } else {
+            if (project) {
+                _.forEach(project.notifications, function(notification) {
+                    console.info('Sending notification:', project.name, notification.type, title, text);
+                    if (notification.type === 'slack') {
+                        slackRequest(notification.slack.incoming_webhook.url, {
+                            attachments: [
+                                {
+                                    fallback: title + ': ' + text,
+                                    color: color,
+                                    pretext: pretext,
+                                    title: title,
+                                    title_link: link,
+                                    text: text,
+                                    ts: Date.now()/1000
+                                }
+                            ]
+                        }).catch(function(err) {
+                            console.error('Failed to send notification:', project.name, notification.type, title, text, err);
+                        });
+                    } else if (notification.type === 'email') {
+                        //TODO: Email notifications.
+                    }
+                });
+            } else {
+                console.error('Failed to find project for notification sending.');
+            }
+        }
+    });
+}
+
+function updateProjectStatus(socket, id, status, error) {
+    db.projects.update({_id: id}, {$set: {status: status, error: error}}, {multi: false, returnUpdatedDocs: true}, function(err, affected, project) {
+        if (err) {
+            console.error('Failed to update project status:', err);
+        } else {
+            io.emit('project_status', {
+                project: id,
+                status: status,
+                error: error
+            });
+
+            if (status == 'running') {
+                sendProjectNotifications(project._id, null, project.name + ' Deployment Status', 'Running', 'Project deployment triggered' + (socket ? ' by "' + socket.session.username + '" user.' : '.'), '#478dff', null);
+            } else if (status === 'succeeded') {
+                sendProjectNotifications(project._id, null, project.name + ' Deployment Status', 'Succeeded', null, '#36a64f', null);
+            } else if (status === 'failed') {
+                sendProjectNotifications(project._id, null, project.name + ' Deployment Status', 'Failed\n' + error, null, '#e50b0b', null);
+            }
+        }
+    });
+}
 
 function createUser(username, password, email) {
     var defer = Q.defer();
@@ -110,7 +236,6 @@ function createUser(username, password, email) {
 
     return defer.promise;
 }
-
 
 function init() {
     io.use(function(socket, next){
@@ -295,70 +420,6 @@ function init() {
 
     });
 
-    function slackRequest(path, data) {
-        var defer = Q.defer();
-
-        request.post({
-            url: 'https://slack.com/api' + path,
-            body: data,
-            json: true,
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8'
-            }
-        }, function (err, res, body) {
-            if (err) {
-                console.error('Slack request failed:', path, err);
-                defer.reject(err);
-            } else {
-                if (body.warning) {
-                    console.warn('Slack request returned a warning:', body.warning);
-                }
-
-                if (body.ok) {
-                    console.info('Slack response:', body);
-                    defer.resolve(body);
-                } else {
-                    console.error('Slack request returned an error:', body.error);
-                    defer.reject(body.error);
-                }
-            }
-        });
-
-        return defer.promise;
-    }
-
-    function bsgRequest(path, data) {
-        var defer = Q.defer();
-
-        request.post({
-            url: 'http://pupdeploy.bombsightgames.com/api' + path,
-            body: data,
-            json: true,
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8'
-            }
-        }, function (err, res, body) {
-            if (err) {
-                console.error('BSG request failed:', path, err);
-                defer.reject(err);
-            } else {
-                if (body.warning) {
-                    console.warn('BSG request returned a warning:', body.warning);
-                }
-
-                if (body.ok) {
-                    console.info('BSG response:', body);
-                    defer.resolve(body);
-                } else {
-                    console.error('BSG request returned an error:', body.error);
-                    defer.reject(body.error);
-                }
-            }
-        });
-
-        return defer.promise;
-    }
-
     //TODO: Get session for verification.
     app.get('/slack', function(req, res) {
         if (req.query) {
@@ -421,22 +482,8 @@ function init() {
         console.log('Listening on port 3000.');
     });
 
-    function updateProjectStatus(id, status, error) {
-        db.projects.update({_id: id}, {$set: {status: status, error: error}}, function(err) {
-            if (err) {
-                console.error('Failed to update project status:', err);
-            } else {
-                io.emit('project_status', {
-                    project: id,
-                    status: status,
-                    error: error
-                });
-            }
-        });
-    }
-
     function runProject(socket, project) {
-        updateProjectStatus(project._id, 'running');
+        updateProjectStatus(socket, project._id, 'running');
 
         var error = false,
             index = 0,
@@ -455,9 +502,9 @@ function init() {
                 index = 0;
             } else if (!run || (servers.length <= 0 && steps.length <= 0)) {
                 if (error) {
-                    updateProjectStatus(project._id, 'failed', server.host + ': One or more steps exited with a non-zero code.');
+                    updateProjectStatus(socket, project._id, 'failed', server.host + ': One or more steps exited with a non-zero code.');
                 } else {
-                    updateProjectStatus(project._id, 'succeeded');
+                    updateProjectStatus(socket, project._id, 'succeeded');
                 }
 
                 return;
@@ -477,7 +524,7 @@ function init() {
             } else if (project.auth.type == 'key') {
                 options.key = project.auth.key;
             } else {
-                updateProjectStatus(project._id, 'failed', server.host + ': Invalid authentication type.');
+                updateProjectStatus(socket, project._id, 'failed', server.host + ': Invalid authentication type.');
                 return;
             }
 
@@ -492,7 +539,7 @@ function init() {
                     server: server,
                     code: 1
                 });
-                updateProjectStatus(project._id, 'failed', server.host + ': ' + err.level);
+                updateProjectStatus(socket, project._id, 'failed', server.host + ': ' + err.level);
                 run = false;
             });
 
@@ -548,7 +595,7 @@ function init() {
                 ssh.start();
             } catch (e) {
                 console.error('Failed to run SSH command:', e);
-                updateProjectStatus(project._id, 'failed', server.host + ': ' + e.message);
+                updateProjectStatus(socket, project._id, 'failed', server.host + ': ' + e.message);
             }
         }
 
