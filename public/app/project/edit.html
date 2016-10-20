@@ -18,14 +18,14 @@
             <div class="col-md-2 well-header">Authentication</div>
             <div class="col-md-10 container-fluid well">
                 <div ng-if="vm.id && !vm.changeAuth">
-                    <label>Current Authentication Type:</label> {{vm.project.auth.type}}<br>
+                    <label>Current Authentication Type:</label> {{vm.project.auth.type|capitalize}}<br>
                     <button class="btn btn-primary" ng-click="vm.changeAuth=vm.project.auth.type;">
                         <i class="fa fa-edit"></i> Change Authentication
                     </button>
                 </div>
                 <div ng-if="!vm.id || vm.changeAuth">
                     <div class="form-group" style="max-width:250px;">
-                        <button class="btn btn-danger btn-xs" ng-if="vm.id" ng-click="vm.project.auth.type=vm.changeAuth; vm.changeAuth=null">
+                        <button class="btn btn-danger btn-xs" ng-if="vm.id" ng-click="vm.project.auth={}; vm.project.auth.type=vm.changeAuth; vm.changeAuth=null">
                             <i class="fa fa-close"></i> Cancel Change
                         </button>
                         <br><br>

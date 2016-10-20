@@ -235,7 +235,7 @@ function updateUser(id, username, password, email) {
                     user.password = bcrypt.hashSync(password);
                 }
 
-                db.users.update({_id: id}, user, {upsert: true}, function(err, user) {
+                db.users.update({_id: id}, {$set: user}, {upsert: true}, function(err, user) {
                     if (err) {
                         console.error('Failed to update user:', err);
                         defer.reject('Failed to save user.');
@@ -356,22 +356,27 @@ function init() {
                 });
             });
 
-            db.projects.update({
-                _id: data._id
-            }, {
+            var project = {
                 name: data.name,
                 steps: steps,
                 servers: servers,
                 status: 'idle',
                 settings: data.settings,
-                auth: {
+                notifications: notifications
+            };
+
+            if (data.auth && ((data.auth.username && data.auth.password) || data.auth.key)) {
+                project.auth = {
                     type: data.auth.type,
                     username: data.auth.username,
                     password: data.auth.password,
                     key: data.auth.key
-                },
-                notifications: notifications
-            }, {
+                };
+            }
+
+            db.projects.update({
+                _id: data._id
+            }, {$set: project}, {
                 upsert: true
             }, function(err) {
                 if (err) {
