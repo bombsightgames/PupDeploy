@@ -411,6 +411,10 @@ function init() {
                 };
             }
 
+            if (project.servers.length <= 0) {
+                return cb('You must specify at least one server to run this deployment on.');
+            }
+
             db.projects.update({
                 _id: data._id
             }, {$set: project}, {

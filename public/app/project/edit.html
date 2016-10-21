@@ -25,10 +25,12 @@
                 </div>
                 <div ng-if="!vm.id || vm.changeAuth">
                     <div class="form-group" style="max-width:250px;">
-                        <button class="btn btn-danger btn-xs" ng-if="vm.id" ng-click="vm.project.auth={}; vm.project.auth.type=vm.changeAuth; vm.changeAuth=null">
-                            <i class="fa fa-close"></i> Cancel Change
-                        </button>
-                        <br><br>
+                        <div ng-if="vm.id">
+                            <button class="btn btn-danger btn-xs" ng-click="vm.project.auth={}; vm.project.auth.type=vm.changeAuth; vm.changeAuth=null">
+                                <i class="fa fa-close"></i> Cancel Change
+                            </button>
+                            <br><br>
+                        </div>
                         <label>Username:</label>
                         <input class="form-control" type="text" ng-model="vm.project.auth.username" required="">
                         <br>
