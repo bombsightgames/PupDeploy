@@ -1,6 +1,6 @@
 {
   "name": "pupdeploy",
-  "version": "0.1.6",
+  "version": "0.2.1",
   "description": "A light weight web based deployment utility.",
   "main": "app.js",
   "scripts": {

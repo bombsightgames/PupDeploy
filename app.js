@@ -7,6 +7,7 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var bodyParser = require('body-parser');
 var Q = require('q');
+var crypto = require('crypto');
 var request = require('request');
 var bcrypt = require('bcrypt-nodejs');
 var Datastore = require('nedb');
@@ -30,6 +31,10 @@ process.on('unhandledRejection', function(err) {
     var method = pair[0], reset = '\x1b[0m', color = '\x1b[36m' + pair[1];
     console[method] = console[method].bind(console, color, method.toUpperCase(), reset);
 });
+
+//Configurations
+var LOGIN_ATTEMPTS_LOCK = 5, //Amount of times a login attempt can be made before the account is locked.
+    LOGIN_LOCK_TIME = 10; //Time that an account is locked in minutes.
 
 var db = {};
 db.projects = new Datastore({
@@ -457,29 +462,72 @@ function init() {
                 res.send({success: false, message: 'Server error, failed to login.'});
             } else {
                 if (user) {
-                    if (bcrypt.compareSync(req.body.password, user.password)) {
-                        db.sessions.insert({
-                            userId: user._id,
-                            username: user.username,
-                            email: user.email
-                        }, function(err, session) {
-                            if (err) {
-                                console.error('Failed to create session:', err);
-                                res.send({success: false, message: 'Server error, failed to login.'});
-                            } else {
-                                console.log('User "' + user.username + '" logged in.');
-                                res.send({success: true, token: session._id});
-                            }
-                        });
+                    if (user.lock > Date.now()) {
+                        res.send({success: false, message: 'This account has been locked for ' + LOGIN_LOCK_TIME + ' minutes because of too many failed login attempts.'});
                     } else {
-                        res.send({success: false, message: 'Invalid username or password.'});
+                        if (bcrypt.compareSync(req.body.password, user.password)) {
+                            crypto.randomBytes(64, function(err, buffer) {
+                                if (err) {
+                                    console.error('Failed to generate token for session:', err);
+                                    res.send({success: false, message: 'Server error, failed to login.'});
+                                } else {
+                                    var token = buffer.toString('hex');
+
+                                    db.sessions.insert({
+                                        _id: token,
+                                        userId: user._id,
+                                        username: user.username,
+                                        email: user.email
+                                    }, function(err, session) {
+                                        if (err) {
+                                            console.error('Failed to create session:', err);
+                                            res.send({success: false, message: 'Server error, failed to login.'});
+                                        } else {
+                                            console.log('User "' + user.username + '" logged in.');
+                                            res.send({success: true, token: session._id});
+                                        }
+                                    });
+                                }
+                            });
+                        } else {
+                            if (user.attempts >= LOGIN_ATTEMPTS_LOCK) {
+                                db.users.update({_id: user._id}, {$set: {attempts: 0, lock: Date.now() + (LOGIN_LOCK_TIME*60*1000)}}, function(err) {
+                                    if (err) {
+                                        console.error('Failed to set lock for failed login:', err);
+                                        res.send({success: false, message: 'Server error, failed to login.'});
+                                    } else {
+                                        console.warn('Account "' + user.username + '" locked for ' + LOGIN_LOCK_TIME + ' minutes because of too many failed login attempts from: ' + (req.headers['x-forwarded-for'] || req.connection.remoteAddress));
+                                        res.send({success: false, message: 'This account has been locked for ' + LOGIN_LOCK_TIME + ' minutes because of too many failed login attempts.'});
+                                    }
+                                });
+                            } else {
+                                if (Date.now() >= user.lastLoginAttempt + (LOGIN_LOCK_TIME*60*1000)) {
+                                    db.users.update({_id: user._id}, {$set: {attempts: 1, lastLoginAttempt: Date.now()}}, function(err) {
+                                        if (err) {
+                                            console.error('Failed to set login attempts:', err);
+                                            res.send({success: false, message: 'Server error, failed to login.'});
+                                        } else {
+                                            res.send({success: false, message: 'Invalid username or password.'});
+                                        }
+                                    });
+                                } else {
+                                    db.users.update({_id: user._id}, {$inc: {attempts: 1}, $set: {lastLoginAttempt: Date.now()}}, function(err) {
+                                        if (err) {
+                                            console.error('Failed to increment login attempts:', err);
+                                            res.send({success: false, message: 'Server error, failed to login.'});
+                                        } else {
+                                            res.send({success: false, message: 'Invalid username or password.'});
+                                        }
+                                    });
+                                }
+                            }
+                        }
                     }
                 } else {
                     res.send({success: false, message: 'Invalid username or password.'});
                 }
             }
         });
-
     });
 
     //TODO: Get session for verification.

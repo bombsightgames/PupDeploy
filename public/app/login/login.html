@@ -8,13 +8,13 @@
                 <form role="form" ng-submit="onSubmit()">
                     <fieldset>
                         <div class="form-group">
-                            <input class="form-control" placeholder="Username" ng-model="user.username" type="text" autofocus="">
+                            <input class="form-control" placeholder="Username" ng-model="user.username" type="text" autofocus="" required="">
                         </div>
                         <div class="form-group">
-                            <input class="form-control" placeholder="Password" ng-model="user.password" type="password" value="">
+                            <input class="form-control" placeholder="Password" ng-model="user.password" type="password" value="" required="">
                         </div>
                         <div class="text-right">
-                            <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-sign-in"></i> Login</button>
+                            <button type="submit" class="btn btn-sm btn-success" ng-disabled="vm.loading"><i class="fa fa-sign-in"></i> Login</button>
                         </div>
                     </fieldset>
                 </form>
