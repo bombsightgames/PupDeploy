@@ -20,6 +20,14 @@ angular.module('app').controller('SetupController', function($http, growl) {
         }
     };
 
+    vm.checkAdminUser = function() {
+        if (vm.admin.password === vm.admin.retypePassword) {
+            vm.nextStep();
+        } else {
+            growl.error('Passwords do not match.');
+        }
+    };
+
     vm.finish = function() {
         window.location.reload();
     };

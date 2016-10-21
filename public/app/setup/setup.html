@@ -20,41 +20,43 @@
     <div class="container-fluid well" ng-if="vm.step == 1">
         <p>We need to set up an admin user that will have full access to everything.</p>
         <br>
-        <div class="row text-center">
-            <div class="col-md-4"></div>
-            <fieldset class="col-md-4 text-left">
-                <div class="form-group">
-                    <label>Username:</label>
-                    <input class="form-control" ng-model="vm.admin.username" type="text" autofocus="">
-                </div>
-                <div class="form-group">
-                    <label>Email:</label>
-                    <input class="form-control" ng-model="vm.admin.email" type="email">
-                </div>
-                <div class="form-group">
-                    <label>Password:</label>
-                    <input class="form-control" ng-model="vm.admin.password" type="password">
-                </div>
-                <div class="form-group">
-                    <label>Retype Password:</label>
-                    <input class="form-control" ng-model="vm.admin.retypePassword" type="password">
-                </div>
-            </fieldset>
-            <div class="col-md-4"></div>
-        </div>
-        <br><br>
-        <div class="row">
-            <div class="col-xs-6 text-left">
-                <button class="btn btn-danger" ng-click="vm.previousStep()">
-                    <i class="fa fa-arrow-left"></i> Back
-                </button>
+        <form ng-submit="vm.checkAdminUser()">
+            <div class="row text-center">
+                <div class="col-md-4"></div>
+                <fieldset class="col-md-4 text-left">
+                    <div class="form-group">
+                        <label>Username:</label>
+                        <input class="form-control" ng-model="vm.admin.username" type="text" autofocus="" required="">
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input class="form-control" ng-model="vm.admin.password" type="password" required="">
+                    </div>
+                    <div class="form-group">
+                        <label>Retype Password:</label>
+                        <input class="form-control" ng-model="vm.admin.retypePassword" type="password" required="">
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input class="form-control" ng-model="vm.admin.email" type="email" required="">
+                    </div>
+                </fieldset>
+                <div class="col-md-4"></div>
             </div>
-            <div class="col-xs-6 text-right">
-                <button class="btn btn-success" ng-click="vm.nextStep()">
-                    Next <i class="fa fa-arrow-right"></i>
-                </button>
+            <br><br>
+            <div class="row">
+                <div class="col-xs-6 text-left">
+                    <button class="btn btn-danger" ng-click="vm.previousStep()" type="button">
+                        <i class="fa fa-arrow-left"></i> Back
+                    </button>
+                </div>
+                <div class="col-xs-6 text-right">
+                    <button class="btn btn-success" type="submit">
+                        Next <i class="fa fa-arrow-right"></i>
+                    </button>
+                </div>
             </div>
-        </div>
+        </form>
     </div>
 
     <div class="container-fluid well" ng-if="vm.step == 2">

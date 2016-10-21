@@ -1,3 +1,7 @@
+if (!process.env.NODE_ENV) {
+    process.env.NODE_ENV = 'production';
+}
+
 var SshClient = require('simple-ssh');
 var express = require('express');
 var _ = require('lodash');
@@ -220,7 +224,7 @@ function updateProjectStatus(socket, id, status, error) {
     });
 }
 
-function updateUser(id, username, password, email) {
+function updateUser(id, username, password, email, superadmin) {
     var defer = Q.defer();
 
     db.users.count({username: username}, function(err, count) {
@@ -232,15 +236,26 @@ function updateUser(id, username, password, email) {
                 defer.reject('A user with that username already exists.');
             } else {
                 var user = {
-                    username: username,
                     email: email
                 };
 
-                if (user.username) {
+                if (!id) {
+                    user.username = username;
+                }
+
+                if (password) {
                     user.password = bcrypt.hashSync(password);
                 }
 
-                db.users.update({_id: id}, {$set: user}, {upsert: true}, function(err, user) {
+                if (superadmin) {
+                    user.superadmin = true;
+                }
+
+                if (id) {
+                    user = {$set: user};
+                }
+
+                db.users.update({_id: id}, user, {upsert: true}, function(err, user) {
                     if (err) {
                         console.error('Failed to update user:', err);
                         defer.reject('Failed to save user.');
@@ -266,8 +281,25 @@ function init() {
                     next(new Error('server_error'));
                 } else {
                     if (session) {
-                        socket.session = session;
-                        next();
+                        db.users.findOne({_id: session.userId}, function(err, user) {
+                            if (err) {
+                                console.error('Failed to get user for session:', err);
+                                next(new Error('server_error'));
+                            } else {
+                                if (user) {
+                                    socket.session = session;
+                                    next();
+                                } else {
+                                    db.sessions.remove({_id: session._id}, function(err) {
+                                        if (err) {
+                                            console.error('Failed to remove invalid token:', err);
+                                        }
+
+                                        next(new Error('invalid_token'));
+                                    });
+                                }
+                            }
+                        });
                     } else {
                         next(new Error('invalid_token'));
                     }
@@ -403,7 +435,8 @@ function init() {
                         cb(null, {
                             _id: user._id,
                             username: user.username,
-                            email: user.email
+                            email: user.email,
+                            superadmin: user.superadmin
                         });
                     } else {
                         cb('User not found.');
@@ -413,13 +446,30 @@ function init() {
         });
 
         socket.on('user_delete', function(id, cb) {
-            //TODO: Implement super admin and ensure it can not be deleted.
-            db.users.remove({_id: id}, function(err) {
+            if (!socket.session.superadmin) {
+                return cb('Only the super admin can delete users.');
+            }
+
+            db.users.findOne({_id: id}, function(err, user) {
                 if (err) {
-                    console.error('Failed to delete user:', err);
-                    cb('Failed to delete user.');
+                    console.error('Failed to get user for deletion:', err);
                 } else {
-                    cb();
+                    if (user) {
+                        if (user.superadmin) {
+                            cb('Cannot delete super admin user.');
+                        } else {
+                            db.users.remove({_id: id}, function(err) {
+                                if (err) {
+                                    console.error('Failed to delete user:', err);
+                                    cb('Failed to delete user.');
+                                } else {
+                                    cb();
+                                }
+                            });
+                        }
+                    } else {
+                        cb('User not found.');
+                    }
                 }
             });
         });
@@ -436,7 +486,8 @@ function init() {
                         filteredUsers.push({
                             _id: user._id,
                             username: user.username,
-                            email: user.email
+                            email: user.email,
+                            superadmin: user.superadmin
                         });
                     });
 
@@ -446,10 +497,25 @@ function init() {
         });
 
         socket.on('user_update', function(data, cb) {
-            updateUser(data._id, data.username, data.password, data.email).then(function() {
-                cb();
-            }, function(err) {
-                cb(err);
+            if (!socket.session.superadmin && socket.session.userId !== data._id) {
+                return cb('Only the super admin can edit other users.');
+            }
+
+            db.users.findOne({_id: data._id}, function(err, user) {
+                if (err) {
+                    console.error('Failed get user for update:', err);
+                    cb('Failed to update user.');
+                } else {
+                    if (user && user.superadmin && !socket.session.superadmin) {
+                        return cb('Only the super admin can edit theirself.');
+                    }
+
+                    updateUser(data._id, data.username, data.password, data.email).then(function() {
+                        cb();
+                    }, function(err) {
+                        cb(err);
+                    });
+                }
             });
         });
     });
@@ -477,7 +543,8 @@ function init() {
                                         _id: token,
                                         userId: user._id,
                                         username: user.username,
-                                        email: user.email
+                                        email: user.email,
+                                        superadmin: user.superadmin
                                     }, function(err, session) {
                                         if (err) {
                                             console.error('Failed to create session:', err);
@@ -563,7 +630,7 @@ function init() {
         if (setupMode) {
             if (req.body.admin) {
                 var admin = req.body.admin;
-                updateUser(null, admin.username, admin.password, admin.email).then(function() {
+                updateUser(null, admin.username, admin.password, admin.email, true).then(function() {
                     setupMode = false;
                     res.send({success: true});
                 }, function(err) {
