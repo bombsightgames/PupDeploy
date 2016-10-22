@@ -80,6 +80,14 @@ angular.module('services', [])
                     });
                 });
 
+                service.socket.on('notification', function(notification) {
+                    try {
+                        growl[notification.type](notification.message, notification.options);
+                    } catch (e) {
+                        console.error('Failed to show notification:', notification, e);
+                    }
+                });
+
                 service.socket.on('error', function(err) {
                     console.error(err);
                     

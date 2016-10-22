@@ -111,7 +111,7 @@ function slackRequest(url, data) {
                     console.info('Slack response:', body);
                     defer.resolve(body);
                 } else {
-                    console.error('Slack request returned an error:', body.error);
+                    console.error('Slack request returned an error:', body);
                     defer.reject(body.error);
                 }
             } else {
@@ -148,7 +148,7 @@ function bsgRequest(path, data) {
                     console.info('BSG response:', body);
                     defer.resolve(body);
                 } else {
-                    console.error('BSG request returned an error:', body.error);
+                    console.error('BSG request returned an error:', body);
                     defer.reject(body.error);
                 }
             } else {
@@ -189,7 +189,20 @@ function sendProjectNotifications(id, types, title, text, pretext, color, link) 
                         } else if (notification.type === 'email') {
                             //TODO: Email notifications.
                         } else if (notification.type === 'web') {
-                            //TODO: Web notifications.
+                            var type = 'info';
+                            if (text.includes('Succeeded')) {
+                                type = 'success';
+                            } else if (text.includes('Failed')) {
+                                type = 'error';
+                            }
+
+                            io.emit('notification', {
+                                type: type,
+                                message: '<b>' + title + '</b><br>' + text,
+                                options: {
+                                    ttl: 15000
+                                }
+                            });
                         } else if (notification.type === 'postToUrl') {
                             //TODO: Post URL notifications.
                         }
@@ -214,7 +227,7 @@ function updateProjectStatus(socket, id, status, error) {
             });
 
             if (status == 'running') {
-                sendProjectNotifications(project._id, null, project.name + ' Deployment Status', 'Running', 'Project deployment triggered' + (socket ? ' by "' + socket.session.username + '" user.' : '.'), '#478dff', null);
+                sendProjectNotifications(project._id, null, project.name + ' Deployment Status', 'Running', 'Project deployment triggered' + (socket ? ' by "' + socket.session.username + '".' : ' automatically.'), '#478dff', null);
             } else if (status === 'succeeded') {
                 sendProjectNotifications(project._id, null, project.name + ' Deployment Status', 'Succeeded', null, '#36a64f', null);
             } else if (status === 'failed') {
@@ -608,16 +621,31 @@ function init() {
                 console.error('Slack setup error:', req.query.error);
                 res.send('<script>window.close();</script>');
             } else {
-                bsgRequest('/token', {
-                    code: req.query.code,
-                    redirect: 'https://pupdeploy.bombsightgames.com/api/' + encodeURIComponent(req.protocol + '://' + req.get('host') + '/slack')
-                }).then(function(data) {
-                    io.emit('slack_setup', {
-                        token: req.query.state,
-                        slack: data
+                var tryForToken = function(protocol) {
+                    var defer = Q.defer();
+
+                    bsgRequest('/token', {
+                        code: req.query.code,
+                        redirect: 'https://pupdeploy.bombsightgames.com/api/' + protocol + '://' + req.get('host') + '/slack'
+                    }).then(function(data) {
+                        io.emit('slack_setup', {
+                            token: req.query.state,
+                            slack: data
+                        });
+                        res.send('<script>window.close();</script>');
+                        defer.resolve();
+                    }, function(err) {
+                        defer.reject(err);
                     });
-                    res.send('<script>window.close();</script>');
-                }, function(err) {
+
+                    return defer.promise;
+                };
+
+                //Try for token with HTTP and HTTPS.
+                //In the case that the server is behind a proxy we can't trust the req.protocol value unless X-Forwarded-Proto is set up.
+                tryForToken('http').catch(function(err) {
+                    return tryForToken('https');
+                }).catch(function(err) {
                     io.emit('slack_setup', {
                         error: 'Failed to setup Slack.',
                         token: req.query.state
