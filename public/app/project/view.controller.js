@@ -26,8 +26,6 @@ angular.module('app').controller('ProjectViewController', function($scope, $loca
         UserService.socket.emit('project_run', id, function(err) {
             if (err) {
                 growl.error(err);
-            } else {
-                addNextStep(0);
             }
         });
     };
@@ -115,6 +113,11 @@ angular.module('app').controller('ProjectViewController', function($scope, $loca
 
     $scope.$on('socket:project_status', function(event, data) {
         if (data.project == id) {
+            if (data.status === 'running') {
+                vm.logs = {};
+                addNextStep(0);
+            }
+
             vm.project.status = data.status;
             vm.project.error = data.error;
 

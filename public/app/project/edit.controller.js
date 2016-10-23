@@ -3,6 +3,7 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
         id = $routeParams.id;
 
     vm.id = id;
+    vm.url = window.location.protocol + '//' + window.location.host;
 
     vm.addStep = function() {
         vm.project.steps.push({
@@ -37,6 +38,67 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
     vm.removeServer = function(index) {
         if (vm.project.servers[index].host === '' || confirm('Are you sure you want to remove this server?')) {
             vm.project.servers.splice(index, 1);
+        }
+    };
+
+    vm.copyTextToClipboard = function(text) {
+        var textArea = document.createElement("textarea");
+
+        textArea.style.position = 'fixed';
+        textArea.style.top = 0;
+        textArea.style.left = 0;
+        textArea.style.width = '2em';
+        textArea.style.height = '2em';
+        textArea.style.padding = 0;
+        textArea.style.border = 'none';
+        textArea.style.outline = 'none';
+        textArea.style.boxShadow = 'none';
+        textArea.style.background = 'transparent';
+        textArea.value = text;
+
+        document.body.appendChild(textArea);
+
+        textArea.select();
+
+        var success = false;
+        try {
+            success = document.execCommand('copy');
+        } catch (err) {
+            success = false;
+        }
+
+        if (success) {
+            growl.success('Copied to clipboard.', {
+                ttl: 2000
+            });
+        } else {
+            growl.error('Failed to copy to clipboard for some reason, try doing it the old fashioned way.');
+        }
+
+        document.body.removeChild(textArea);
+    };
+
+    function generateString(length) {
+        var text = '';
+        var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+        for (var i=0; i < length; i++) {
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+        }
+
+        return text;
+    }
+
+    vm.addTrigger = function() {
+        vm.project.triggers.push({
+            type: 'postToUrl',
+            hash: generateString(128)
+        });
+    };
+
+    vm.removeTrigger = function(index) {
+        if (confirm('Are you sure you want to remove this trigger?')) {
+            vm.project.triggers.splice(index, 1);
         }
     };
 
@@ -104,7 +166,7 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
     vm.authSlack = function(notification) {
         notification.token = Math.floor(Math.random()*100000000);
 
-        var redirect = encodeURIComponent('https://pupdeploy.bombsightgames.com/api/' + window.location.protocol + '//' + window.location.host + '/slack');
+        var redirect = encodeURIComponent('https://pupdeploy.bombsightgames.com/api/' + window.url + '/slack');
         var slackUrl = 'https://slack.com/oauth/authorize?scope=incoming-webhook&client_id=90733115808.92334895841&state=' + notification.token + '&redirect_uri=' + redirect;
         if (notification.token && slackUrl) {
             window.open(slackUrl, '_blank', 'width=600,height=500' + ', top=' + ((window.innerHeight - 500) / 2) + ', left=' + ((window.innerWidth - 600) / 2));
@@ -119,6 +181,10 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
                 $location.path('/projects');
             } else {
                 vm.project = project;
+
+                if (!vm.project.triggers) {
+                    vm.project.triggers = [];
+                }
             }
 
             vm.loading = false;
@@ -129,10 +195,12 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
             name: '',
             steps: [],
             servers: [],
+            triggers: [],
             settings: {
                 haltOnFailure: true,
                 enableMonitoring: false,
-                enableNotifications: false
+                enableNotifications: false,
+                enableTriggers: false
             },
             auth: {
                 type: 'password'

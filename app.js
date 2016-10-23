@@ -398,6 +398,14 @@ function init() {
                 });
             });
 
+            var triggers = [];
+            _.forEach(data.triggers, function(trigger) {
+                triggers.push({
+                    type: trigger.type,
+                    hash: trigger.hash
+                });
+            });
+
             var notifications = [];
             _.forEach(data.notifications, function(notification) {
                 notifications.push({
@@ -408,10 +416,10 @@ function init() {
 
             var project = {
                 name: data.name,
+                settings: data.settings,
                 steps: steps,
                 servers: servers,
-                status: 'idle',
-                settings: data.settings,
+                triggers: triggers,
                 notifications: notifications
             };
 
@@ -614,6 +622,27 @@ function init() {
         });
     });
 
+    app.post('/trigger/:hash', function(req, res) {
+        var hash = req.params.hash;
+        if (hash) {
+            db.projects.findOne({triggers: {$elemMatch: {hash: hash}}}, function(err, project) {
+                if (err) {
+                    console.error('Error triggering project:', hash, err);
+                    res.send({success: false, message: 'Server error.'});
+                } else {
+                    if (project && project.settings.enableTriggers) {
+                        runProject(null, project);
+                        res.send({success: true});
+                    } else {
+                        res.send({success: false, message: 'Invalid trigger.'});
+                    }
+                }
+            });
+        } else {
+            res.send({success: false, message: 'Invalid trigger.'});
+        }
+    });
+
     //TODO: Get session for verification.
     app.get('/slack', function(req, res) {
         if (req.query) {
@@ -739,7 +768,7 @@ function init() {
 
             ssh.on('error', function(err) {
                 console.error('SSH Error:', err);
-                socket.emit('step_end', {
+                io.emit('step_end', {
                     project: project._id,
                     index: index,
                     step: step,
@@ -753,7 +782,7 @@ function init() {
             ssh.exec(step.commands, {
                 out: function(stdout) {
                     console.log('stdout:', stdout);
-                    socket.emit('step_run', {
+                    io.emit('step_run', {
                         project: project._id,
                         index: index,
                         step: step,
@@ -764,7 +793,7 @@ function init() {
                 },
                 err: function(stderr) {
                     console.error('stderr:', stderr);
-                    socket.emit('step_run', {
+                    io.emit('step_run', {
                         project: project._id,
                         index: index,
                         step: step,
@@ -776,7 +805,7 @@ function init() {
                 exit: function(code) {
                     setTimeout(function() {
                         console.log('Step End:', server.host, index, code);
-                        socket.emit('step_end', {
+                        io.emit('step_end', {
                             project: project._id,
                             index: index,
                             step: step,

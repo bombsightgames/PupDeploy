@@ -54,6 +54,9 @@
         <div class="row">
             <div class="col-md-2 well-header">Servers</div>
             <div class="col-md-10 container-fluid well">
+                <div class="text-center" ng-if="vm.project.servers.length <= 0">
+                    You do not have any servers for this project.
+                </div>
                 <div ng-repeat="(index, server) in vm.project.servers">
                     <label>Server #{{index+1}}</label> <button type="button" ng-click="vm.removeServer(index)" class="btn btn-danger btn-xs" style="float:right;"><i class="fa fa-close"></i></button>
                     <input class="form-control" type="text" ng-model="vm.project.servers[index].host" required="">
@@ -69,6 +72,9 @@
         <div class="row">
             <div class="col-md-2 well-header">Steps</div>
             <div class="col-md-10 container-fluid well">
+                <div class="text-center" ng-if="vm.project.steps.length <= 0">
+                    You do not have any steps for this project.
+                </div>
                 <div ng-repeat="(index, step) in vm.project.steps">
                     <label>Step #{{index+1}}</label> <button type="button" ng-click="vm.removeStep(index)" class="btn btn-danger btn-xs" style="float:right;"><i class="fa fa-close"></i></button>
                     <textarea class="form-control" rows="4" ng-model="vm.project.steps[index].commands" required=""></textarea>
@@ -82,9 +88,51 @@
             </div>
         </div>
         <div class="row">
+            <div class="col-md-2 well-header">Triggers</div>
+            <div class="col-md-10 container-fluid well">
+                <label><input type="checkbox" ng-model="vm.project.settings.enableTriggers"> Enable triggers.</label>
+                <div ng-if="vm.project.settings.enableTriggers">
+                    <br>
+                    <div class="text-center" ng-if="vm.project.triggers.length <= 0">
+                        You do not have any triggers for this project.
+                    </div>
+                    <div class="form-group" ng-repeat="(index, trigger) in vm.project.triggers">
+                        <label for="triggerType">Trigger #{{index+1}}:</label>
+                        <button type="button" ng-click="vm.removeTrigger(index)" class="btn btn-danger btn-xs" style="float:right;"><i class="fa fa-close"></i></button>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <select class="form-control" id="triggerType" ng-model="trigger.type">
+                                    <option value="postToUrl">Post to URL</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8 text-center">
+                                <div ng-if="trigger.type == 'postToUrl'">
+                                    <p>Post anything to the URL below and this project will be run.</p>
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                            <button class="btn btn-success" type="button" ng-click="vm.copyTextToClipboard(vm.url + '/trigger/' + trigger.hash)">Copy URL</button>
+                                        </div>
+                                        <div class="col-md-10">
+                                            <input class="form-control" type="text" id="{{trigger.hash}}" disabled="disabled" value="{{vm.url + '/trigger/' + trigger.hash}}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="text-right">
+                        <button class="btn btn-success" ng-click="vm.addTrigger()" type="button">
+                            <i class="fa fa-plus"></i> Add Trigger
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
             <div class="col-md-2 well-header">Monitoring</div>
             <div class="col-md-10 container-fluid well">
-                <label><input type="checkbox" ng-model="vm.project.settings.enableMonitoring"> Enable server monitoring.</label>
+                <label><input type="checkbox" ng-model="vm.project.settings.enableMonitoring"> Enable monitoring.</label>
                 <div ng-if="vm.project.settings.enableMonitoring">
                     <i class="fa fa-close"></i> Not implemented yet.
                 </div>
@@ -96,11 +144,15 @@
                 <label><input type="checkbox" ng-model="vm.project.settings.enableNotifications"> Enable notifications.</label>
                 <div ng-if="vm.project.settings.enableNotifications">
                     <br>
+                    <div class="text-center" ng-if="vm.project.notifications.length <= 0">
+                        You do not have any notifications for this project.
+                    </div>
                     <div class="form-group" ng-repeat="(index, notification) in vm.project.notifications">
-                        <label for="notificationType">Notification #{{index+1}}:</label><button type="button" ng-click="vm.removeNotification(index)" class="btn btn-danger btn-xs" style="float:right;"><i class="fa fa-close"></i></button>
+                        <label for="notificationType">Notification #{{index+1}}:</label>
+                        <button type="button" ng-click="vm.removeNotification(index)" class="btn btn-danger btn-xs" style="float:right;"><i class="fa fa-close"></i></button>
                         <div class="row">
                             <div class="col-md-4">
-                                <select class="form-control" id="notificationType" ng-model="vm.project.notifications[index].type">
+                                <select class="form-control" id="notificationType" ng-model="notification.type">
                                     <option value="email">Email</option>
                                     <option value="slack">Slack</option>
                                     <option value="web">PupDeploy</option>
@@ -108,16 +160,17 @@
                                 </select>
                             </div>
                             <div class="col-md-8 text-center">
-                                <div ng-if="vm.project.notifications[index].type == 'web'">
+                                <div ng-if="notification.type == 'web'">
                                     <p>Project users will be notified via growl messages on any PupDeploy page.</p>
                                 </div>
-                                <div ng-if="vm.project.notifications[index].type == 'postToUrl'">
+                                <div ng-if="notification.type == 'postToUrl'">
                                     <p><i class="fa fa-close"></i> Not implemented</p>
                                 </div>
-                                <div ng-if="vm.project.notifications[index].type == 'email'">
+                                <div ng-if="notification.type == 'email'">
+                                    <p><i class="fa fa-close"></i> Not implemented</p>
                                     <p>Project users will be notified via email when the project is deployed.</p>
                                 </div>
-                                <div ng-if="vm.project.notifications[index].type == 'slack'">
+                                <div ng-if="notification.type == 'slack'">
                                     <div ng-if="notification.slack">
                                         Posting to team {{notification.slack.team_name}} in channel {{notification.slack.incoming_webhook.channel}}.
                                     </div>

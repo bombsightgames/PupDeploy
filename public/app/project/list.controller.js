@@ -43,4 +43,25 @@ angular.module('app').controller('ProjectListController', function($scope, $loca
             });
         }
     };
+
+    $scope.$on('socket:project_status', function(event, data) {
+        if (!vm.projects) {
+            return;
+        }
+
+        var project = null;
+        for (var i=0; i<vm.projects.length; i++) {
+            var p = vm.projects[i];
+            if (data.project == p._id) {
+                project = p;
+                break;
+            }
+        }
+
+        if (project) {
+            project.status = data.status;
+            project.error = data.error;
+            $scope.$apply();
+        }
+    });
 });
