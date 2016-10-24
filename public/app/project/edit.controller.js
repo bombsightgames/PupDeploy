@@ -166,7 +166,7 @@ angular.module('app').controller('ProjectEditController', function($rootScope, $
     vm.authSlack = function(notification) {
         notification.token = Math.floor(Math.random()*100000000);
 
-        var redirect = encodeURIComponent('https://pupdeploy.bombsightgames.com/api/' + window.url + '/slack');
+        var redirect = encodeURIComponent('https://pupdeploy.bombsightgames.com/api/' + vm.url + '/slack');
         var slackUrl = 'https://slack.com/oauth/authorize?scope=incoming-webhook&client_id=90733115808.92334895841&state=' + notification.token + '&redirect_uri=' + redirect;
         if (notification.token && slackUrl) {
             window.open(slackUrl, '_blank', 'width=600,height=500' + ', top=' + ((window.innerHeight - 500) / 2) + ', left=' + ((window.innerWidth - 600) / 2));
