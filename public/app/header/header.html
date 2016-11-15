@@ -10,6 +10,7 @@
                 <i class="fa fa-user"></i> {{userData.username}} <i class="fa fa-caret-down"></i>
             </button>
             <ul class="dropdown-menu pull-right">
+                <li><a href="/users/edit/{{userData.userId}}"><i class="fa fa-info-circle"></i> Profile</a></li>
                 <li><a href="/user/settings"><i class="fa fa-gear"></i> Settings</a></li>
                 <li><a ng-click="logout()" href="#"><i class="fa fa-sign-out"></i> Logout</a></li>
             </ul>

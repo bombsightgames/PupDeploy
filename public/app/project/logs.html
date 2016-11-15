@@ -1,0 +1,23 @@
+<div class="breadcrumb">
+    <a href="/"><i class="fa fa-tachometer"></i> Dashboard</a> >
+    <a href="/projects"><i class="fa fa-folder-open"></i> Projects</a> >
+    <a href="/projects/view/{{vm.id}}"><i class="fa fa-info-circle"></i> View</a> >
+    <i class="fa fa-list"></i> Logs
+</div>
+<div class="text-left" class="form-group" ng-if="!vm.loading">
+    <h2><i class="fa fa-list"></i> {{vm.project.name}} Logs</h2>
+    <div ng-if="!vm.logs || vm.logs.length <= 0" class="well text-center">
+        <h3>This project does not have any executions.</h3>
+    </div>
+    <div ng-if="vm.logs && vm.logs.length > 0" ng-repeat="log in vm.logs" class="well row">
+        <div class="col-md-6" style="font-size:20px;">
+            <span>Execution #{{log.execution}}</span>
+            <span class="hidden-sm hidden-xs"> - </span>
+            <span class="hidden-md hidden-lg"><br></span>
+            <span>{{log.updated|date:'medium'}}</span>
+        </div>
+        <div class="col-md-6 text-right">
+            <pd-status status="log.status"></pd-status>
+        </div>
+    </div>
+</div>

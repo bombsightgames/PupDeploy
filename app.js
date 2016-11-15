@@ -45,6 +45,10 @@ db.projects = new Datastore({
     filename: './data/projects.db',
     autoload: true
 });
+db.logs = new Datastore({
+    filename: './data/logs.db',
+    autoload: true
+});
 db.users = new Datastore({
     filename: './data/users.db',
     autoload: true
@@ -69,7 +73,7 @@ db.projects.find({status: 'running'}, function(err, projects) {
         console.error('Failed to get projects on startup:', err);
     } else {
         _.forEach(projects, function(project) {
-            updateProjectStatus(null, project._id, 'failed', 'PupDeploy server crashed or was shutdown during deployment.');
+            updateProjectStatus(null, project._id, 'failed', 'PupDeploy server crashed or was shutdown during deployment.', project.executions);
         });
     }
 });
@@ -215,8 +219,43 @@ function sendProjectNotifications(id, types, title, text, pretext, color, link) 
     });
 }
 
-function updateProjectStatus(socket, id, status, error) {
-    db.projects.update({_id: id}, {$set: {status: status, error: error}}, {multi: false, returnUpdatedDocs: true}, function(err, affected, project) {
+function updateProjectLog(projectId, execution, status, error, logs) {
+    var data = {
+        $set: {
+            projectId: projectId,
+            execution: execution,
+            status: status,
+            error: error,
+            updated: Date.now()
+        }
+    };
+
+    if (logs) {
+        data.$set.logs = logs;
+    }
+
+    db.logs.update({projectId: projectId, execution: execution}, data, {upsert: true, multi: false}, function(err) {
+        if (err) {
+            console.error('Failed to update project logs:', err);
+        } else {
+            if (!logs) {
+                io.emit('log_status', {
+                    projectId: projectId,
+                    execution: execution,
+                    status: status,
+                    error: error
+                });
+            }
+        }
+    });
+}
+
+function updateProjectStatus(socket, id, status, error, executions) {
+    var data = {$set: {status: status, error: error, updated: Date.now()}};
+    if (executions) {
+        data.$set.executions = executions;
+    }
+    db.projects.update({_id: id}, data, {multi: false, returnUpdatedDocs: true}, function(err, affected, project) {
         if (err) {
             console.error('Failed to update project status:', err);
         } else {
@@ -225,6 +264,10 @@ function updateProjectStatus(socket, id, status, error) {
                 status: status,
                 error: error
             });
+
+            if (executions) {
+                updateProjectLog(id, executions, status, error);
+            }
 
             if (status == 'running') {
                 sendProjectNotifications(project._id, null, project.name + ' Deployment Status', 'Running', 'Project deployment triggered' + (socket ? ' by "' + socket.session.username + '".' : ' automatically.'), '#478dff', null);
@@ -279,7 +322,6 @@ function updateUser(id, username, password, email, superadmin) {
             }
         }
     });
-
 
     return defer.promise;
 }
@@ -361,6 +403,32 @@ function init() {
             });
         });
 
+        socket.on('project_logs', function(id, cb) {
+            db.logs.find({projectId: id}).sort({execution: -1}).exec(function(err, logs) {
+                if (err) {
+                    console.error('Failed to get logs:', err);
+                    cb('Failed to get logs.');
+                } else {
+                    if (logs) {
+                        cb(null, logs);
+                    } else {
+                        cb('Project not found.');
+                    }
+                }
+            });
+        });
+
+        socket.on('project_log', function(data, cb) {
+            db.logs.findOne({projectId: data.projectId, execution: data.execution}, function(err, log) {
+                if (err) {
+                    console.error('Failed to get log:', err);
+                    cb('Failed to get log.');
+                } else {
+                    cb(null, log);
+                }
+            });
+        });
+
         socket.on('project_delete', function(id, cb) {
             db.projects.remove({_id: id}, function(err) {
                 if (err) {
@@ -420,7 +488,8 @@ function init() {
                 steps: steps,
                 servers: servers,
                 triggers: triggers,
-                notifications: notifications
+                notifications: notifications,
+                updated: Date.now()
             };
 
             if (data.auth && ((data.auth.username && data.auth.password) || data.auth.key)) {
@@ -719,7 +788,10 @@ function init() {
     });
 
     function runProject(socket, project) {
-        updateProjectStatus(socket, project._id, 'running');
+        var executions = project.executions ? project.executions : 0;
+        var logs = {};
+        executions++;
+        updateProjectStatus(socket, project._id, 'running', null, executions);
 
         var error = false,
             index = 0,
@@ -738,9 +810,9 @@ function init() {
                 index = 0;
             } else if (!run || (servers.length <= 0 && steps.length <= 0)) {
                 if (error) {
-                    updateProjectStatus(socket, project._id, 'failed', server.host + ': One or more steps exited with a non-zero code.');
+                    updateProjectStatus(socket, project._id, 'failed', server.host + ': One or more steps exited with a non-zero code.', executions);
                 } else {
-                    updateProjectStatus(socket, project._id, 'succeeded');
+                    updateProjectStatus(socket, project._id, 'succeeded', null, executions);
                 }
 
                 return;
@@ -760,29 +832,68 @@ function init() {
             } else if (project.auth.type == 'key') {
                 options.key = project.auth.key;
             } else {
-                updateProjectStatus(socket, project._id, 'failed', server.host + ': Invalid authentication type.');
+                updateProjectStatus(socket, project._id, 'failed', server.host + ': Invalid authentication type.', executions);
                 return;
+            }
+
+            function stepRun(data) {
+                io.emit('step_run', data);
+
+                data.output += '\n';
+
+                var server = logs[data.server.index];
+                if (server) {
+                    data.server = null;
+                    if (server.logs[data.index] ) {
+                        server.logs[data.index].output += data.output;
+                    } else {
+                        server.logs[data.index] = data;
+                    }
+                } else {
+                    server = data.server;
+                    data.server = null;
+                    server.logs = {};
+                    server.logs[data.index] = data;
+                }
+
+                logs[server.index] = server;
+                updateProjectLog(project._id, executions, project.status, project.error, logs);
+            }
+
+            function stepEnd(data) {
+                io.emit('step_end', data);
+
+                if (logs[data.server.index] ) {
+                    logs[data.server.index].logs[data.index].code = data.code;
+                } else {
+                    var index = data.server.index;
+                    logs[data.server.index] = data.server;
+                    data.server = null;
+                    logs[index].logs = {};
+                    logs[index].logs[data.index] = data;
+                }
+                updateProjectLog(project._id, executions, project.status, project.error, logs);
             }
 
             var ssh = new SshClient(options);
 
             ssh.on('error', function(err) {
                 console.error('SSH Error:', err);
-                io.emit('step_end', {
+                stepEnd({
                     project: project._id,
                     index: index,
                     step: step,
                     server: server,
                     code: 1
                 });
-                updateProjectStatus(socket, project._id, 'failed', server.host + ': ' + err.level);
+                updateProjectStatus(socket, project._id, 'failed', server.host + ': ' + err.level + ' ' + err.code, executions);
                 run = false;
             });
 
             ssh.exec(step.commands, {
                 out: function(stdout) {
                     console.log('stdout:', stdout);
-                    io.emit('step_run', {
+                    stepRun({
                         project: project._id,
                         index: index,
                         step: step,
@@ -793,7 +904,7 @@ function init() {
                 },
                 err: function(stderr) {
                     console.error('stderr:', stderr);
-                    io.emit('step_run', {
+                    stepRun('step_run', {
                         project: project._id,
                         index: index,
                         step: step,
@@ -805,7 +916,7 @@ function init() {
                 exit: function(code) {
                     setTimeout(function() {
                         console.log('Step End:', server.host, index, code);
-                        io.emit('step_end', {
+                        stepEnd({
                             project: project._id,
                             index: index,
                             step: step,
@@ -831,14 +942,10 @@ function init() {
                 ssh.start();
             } catch (e) {
                 console.error('Failed to run SSH command:', e);
-                updateProjectStatus(socket, project._id, 'failed', server.host + ': ' + e.message);
+                updateProjectStatus(socket, project._id, 'failed', server.host + ': ' + e.message, executions);
             }
         }
 
         runNextStep();
-    }
-
-    function runTask(fn) {
-        var worker = childProcess.fork();
     }
 }

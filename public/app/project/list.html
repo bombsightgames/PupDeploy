@@ -13,12 +13,15 @@
                     <pd-status status="project.status"></pd-status>
                 </div>
                 <div class="col-md-6 text-right">
-                    <button class="btn btn-primary" ng-click="vm.viewProject(project._id)">
+                    <a class="btn btn-primary" href="/projects/view/{{project._id}}">
                         <i class="fa fa-info-circle"></i> View
-                    </button>
-                    <button class="btn btn-primary" ng-click="vm.editProject(project._id)" ng-disabled="project.status === 'running'">
+                    </a>
+                    <a class="btn btn-primary" href="/projects/view/{{project._id}}/logs">
+                        <i class="fa fa-list"></i> Logs
+                    </a>
+                    <a class="btn btn-primary" href="/projects/edit/{{project._id}}" ng-disabled="project.status === 'running'">
                         <i class="fa fa-edit"></i> Configure
-                    </button>
+                    </a>
                 </div>
             </div>
     </div>

@@ -10,17 +10,23 @@
             <button class="btn btn-success" ng-click="vm.runProject()" ng-disabled="vm.project.status === 'running'">
                 <i class="fa fa-play"></i> Run
             </button>
-            <button class="btn btn-primary" ng-click="vm.editProject()" ng-disabled="vm.project.status === 'running'">
+            <a class="btn btn-primary" href="/projects/view/{{vm.id}}/logs">
+                <i class="fa fa-list"></i> Logs
+            </a>
+            <a class="btn btn-primary" href="/projects/edit/{{vm.id}}" ng-disabled="vm.project.status === 'running'">
                 <i class="fa fa-edit"></i> Configure
-            </button>
+            </a>
         </div>
     </div>
     <h3 ng-if="vm.project.error" class="bg bg-danger text-danger">
         <i class="fa fa-close"></i> Failed to deploy project: {{vm.project.error}}
     </h3>
-    <div ng-if="vm.logs">
-        <h2>Run Logs</h2>
-        <div ng-repeat="(index, server) in vm.logs">
+    <div>
+        <h2>Latest Execution</h2>
+        <div ng-if="!vm.logs || vm.logs.length <= 0" class="well text-center">
+            <h3>This project does not have any logs.</h3>
+        </div>
+        <div ng-if="vm.logs" ng-repeat="(index, server) in vm.logs">
             <label>Server #{{server.index+1}}: {{server.host}}</label>
             <div class="well">
                 <div ng-repeat="(index, log) in server.logs">

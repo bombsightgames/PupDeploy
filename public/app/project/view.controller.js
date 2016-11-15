@@ -13,10 +13,20 @@ angular.module('app').controller('ProjectViewController', function($scope, $loca
             $location.path('/projects');
         } else {
             vm.project = project;
-        }
+            UserService.socket.emit('project_log', {projectId: id, execution: project.executions}, function(err, log) {
+                if (err) {
+                    growl.error(err);
+                    $location.path('/projects');
+                } else {
+                    if (log) {
+                        vm.logs = log.logs;
+                    }
 
-        vm.loading = false;
-        $scope.$apply();
+                    vm.loading = false;
+                    $scope.$apply();
+                }
+            });
+        }
     });
 
     vm.runProject = function() {
@@ -28,23 +38,6 @@ angular.module('app').controller('ProjectViewController', function($scope, $loca
                 growl.error(err);
             }
         });
-    };
-
-    vm.editProject = function() {
-        $location.path('/projects/edit/' + id);
-    };
-
-    vm.deleteProject = function() {
-        if (confirm('Are you sure you want to delete this project?')) {
-            UserService.socket.emit('project_delete', id, function(err) {
-                if (err) {
-                    growl.error(err);
-                } else {
-                    growl.success('Project deleted successfully.');
-                    $location.path('/projects');
-                }
-            });
-        }
     };
 
     $scope.$on('socket:step_run', function(event, data) {
@@ -107,7 +100,6 @@ angular.module('app').controller('ProjectViewController', function($scope, $loca
         if (data.code == 0 || !vm.project.settings.haltOnFailure) {
             addNextStep(data.index + 1);
         }
-        
         $scope.$apply();
     });
 
