@@ -915,7 +915,7 @@ function init() {
                 },
                 err: function(stderr) {
                     console.error('stderr:', stderr);
-                    stepRun('step_run', {
+                    stepRun({
                         project: project._id,
                         index: index,
                         step: step,
