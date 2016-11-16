@@ -9,15 +9,20 @@
     <div ng-if="!vm.logs || vm.logs.length <= 0" class="well text-center">
         <h3>This project does not have any executions.</h3>
     </div>
-    <div ng-if="vm.logs && vm.logs.length > 0" ng-repeat="log in vm.logs" class="well row">
-        <div class="col-md-6" style="font-size:20px;">
-            <span>Execution #{{log.execution}}</span>
-            <span class="hidden-sm hidden-xs"> - </span>
-            <span class="hidden-md hidden-lg"><br></span>
-            <span>{{log.updated|date:'medium'}}</span>
-        </div>
-        <div class="col-md-6 text-right">
-            <pd-status status="log.status"></pd-status>
-        </div>
+    <div ng-if="vm.logs && vm.logs.length > 0" ng-repeat="log in vm.logs">
+        <a href="/projects/view/{{vm.id}}/logs/{{log.execution}}" ng-click="vm.viewLog($event, log)" style="color:inherit;">
+            <div class="well log-entry row">
+                <div class="col-sm-6" style="font-size:20px;">
+                    <span>Execution #{{log.execution}}</span>
+                    <br>
+                    <span>Triggered {{log.trigger ? 'by ' + log.trigger : 'automatically'}}.</span>
+
+                </div>
+                <div class="col-sm-6 text-right">
+                    <pd-status status="log.status"></pd-status>
+                    <span style="font-size:18px;">{{log.updated|date:'medium'}}</span>
+                </div>
+            </div>
+        </a>
     </div>
 </div>

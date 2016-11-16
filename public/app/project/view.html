@@ -13,7 +13,7 @@
             <a class="btn btn-primary" href="/projects/view/{{vm.id}}/logs">
                 <i class="fa fa-list"></i> Logs
             </a>
-            <a class="btn btn-primary" href="/projects/edit/{{vm.id}}" ng-disabled="vm.project.status === 'running'">
+            <a class="btn btn-primary" href="/projects/edit/{{vm.id}}">
                 <i class="fa fa-edit"></i> Configure
             </a>
         </div>
@@ -23,6 +23,7 @@
     </h3>
     <div>
         <h2>Latest Execution</h2>
+        <h4 ng-if="vm.log">Triggered {{vm.log.trigger ? 'by ' + vm.log.trigger : 'automatically'}}.</h4>
         <div ng-if="!vm.logs || vm.logs.length <= 0" class="well text-center">
             <h3>This project does not have any logs.</h3>
         </div>

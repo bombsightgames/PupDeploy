@@ -25,4 +25,11 @@ angular.module('app').controller('ProjectLogsController', function($scope, $loca
             });
         }
     });
+
+    vm.viewLog = function($event, log) {
+        if (log.execution == vm.project.executions) {
+            $event.preventDefault();
+            $location.path('/projects/view/' + vm.id);
+        }
+    };
 });

@@ -6,6 +6,7 @@ angular.module('app').controller('ProjectViewController', function($scope, $loca
     vm.loading = true;
     vm.project = {};
     vm.logs = null;
+    vm.log = null;
     vm.serverIndex = 0;
     UserService.socket.emit('project_get', id, function(err, project) {
         if (err) {
@@ -19,6 +20,7 @@ angular.module('app').controller('ProjectViewController', function($scope, $loca
                     $location.path('/projects');
                 } else {
                     if (log) {
+                        vm.log = log;
                         vm.logs = log.logs;
                     }
 
@@ -30,6 +32,7 @@ angular.module('app').controller('ProjectViewController', function($scope, $loca
     });
 
     vm.runProject = function() {
+        vm.log = null;
         vm.logs = {};
 
         vm.serverIndex = 0;
@@ -112,16 +115,6 @@ angular.module('app').controller('ProjectViewController', function($scope, $loca
 
             vm.project.status = data.status;
             vm.project.error = data.error;
-
-            if (data.error && Object.keys(vm.logs).length <= 1) {
-                if (vm.logs[0]) {
-                    if (Object.keys(vm.logs[0].logs).length <= 1) {
-                        vm.logs = null;
-                    }
-                } else {
-                    vm.logs = null;
-                }
-            }
 
             $scope.$apply();
         }

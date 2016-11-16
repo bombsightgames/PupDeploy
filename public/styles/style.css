@@ -9,9 +9,7 @@ textarea {
 
 .header {
     background-color: #883333;
-    margin-bottom: 14px;
     padding: 6px;
-    box-shadow: ;
     margin: 0px 0px 12px 0px;
     box-shadow: 0px 4px 4px #888888;
 }
@@ -106,4 +104,8 @@ html {
 
 .footer-container .text-muted {
     margin: 10px 0;
+}
+
+.log-entry:hover {
+    background-color: #E8E8E8;
 }

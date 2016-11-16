@@ -219,7 +219,7 @@ function sendProjectNotifications(id, types, title, text, pretext, color, link) 
     });
 }
 
-function updateProjectLog(projectId, execution, status, error, logs) {
+function updateProjectLog(projectId, execution, status, error, logs, trigger) {
     var data = {
         $set: {
             projectId: projectId,
@@ -232,6 +232,10 @@ function updateProjectLog(projectId, execution, status, error, logs) {
 
     if (logs) {
         data.$set.logs = logs;
+    }
+
+    if (trigger) {
+        data.$set.trigger = trigger;
     }
 
     db.logs.update({projectId: projectId, execution: execution}, data, {upsert: true, multi: false}, function(err) {
@@ -266,7 +270,7 @@ function updateProjectStatus(socket, id, status, error, executions) {
             });
 
             if (executions) {
-                updateProjectLog(id, executions, status, error);
+                updateProjectLog(id, executions, status, error, null, socket ? socket.session.username : null);
             }
 
             if (status == 'running') {
@@ -404,7 +408,7 @@ function init() {
         });
 
         socket.on('project_logs', function(id, cb) {
-            db.logs.find({projectId: id}).sort({execution: -1}).exec(function(err, logs) {
+            db.logs.find({projectId: id}).sort({execution: -1}).limit(20).exec(function(err, logs) {
                 if (err) {
                     console.error('Failed to get logs:', err);
                     cb('Failed to get logs.');
@@ -886,7 +890,14 @@ function init() {
                     server: server,
                     code: 1
                 });
-                updateProjectStatus(socket, project._id, 'failed', server.host + ': ' + err.level + ' ' + err.code, executions);
+                var message = server.host + ': ' + err.level;
+                if (err.code) {
+                    message += ' - ' + err.code;
+                }
+                if (err.message) {
+                    message += ' - ' + err.message;
+                }
+                updateProjectStatus(socket, project._id, 'failed', message, executions);
                 run = false;
             });
 
