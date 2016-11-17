@@ -92,7 +92,7 @@ angular.module('app').controller('ProjectViewController', function($scope, $loca
     }
 
     $scope.$on('socket:step_end', function(event, data) {
-        if (vm.logs[data.server.index] ) {
+        if (vm.logs[data.server.index]) {
             vm.logs[data.server.index].logs[data.index].code = data.code;
         } else {
             vm.logs[data.server.index] = data.server;

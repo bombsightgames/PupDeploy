@@ -864,10 +864,35 @@ function init() {
                 updateProjectLog(project._id, executions, project.status, project.error, logs);
             }
 
+            function addNextStep(index) {
+                if (index >= project.steps.length) {
+                    index = 0;
+                }
+
+                var nextStep = project.steps[index];
+                if (nextStep && serverIndex <= project.servers.length-1) {
+                    if (!logs[serverIndex]) {
+                        logs[serverIndex] = {
+                            index: serverIndex,
+                            host: project.servers[serverIndex].host,
+                            logs: {}
+                        };
+                    }
+
+                    logs[serverIndex].logs[index] = {
+                        project: project._id,
+                        index: index,
+                        step: project.steps[index],
+                        output: '',
+                        type: 'out'
+                    };
+                }
+            }
+
             function stepEnd(data) {
                 io.emit('step_end', data);
 
-                if (logs[data.server.index] ) {
+                if (logs[data.server.index]) {
                     logs[data.server.index].logs[data.index].code = data.code;
                 } else {
                     var index = data.server.index;
@@ -876,6 +901,11 @@ function init() {
                     logs[index].logs = {};
                     logs[index].logs[data.index] = data;
                 }
+
+                if (data.code == 0 || !project.settings.haltOnFailure) {
+                    addNextStep(data.index + 1);
+                }
+
                 updateProjectLog(project._id, executions, project.status, project.error, logs);
             }
 
