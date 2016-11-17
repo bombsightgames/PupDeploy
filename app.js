@@ -865,21 +865,22 @@ function init() {
             }
 
             function addNextStep(index) {
+                var sIndex = serverIndex-1;
                 if (index >= project.steps.length) {
                     index = 0;
                 }
 
                 var nextStep = project.steps[index];
-                if (nextStep && serverIndex <= project.servers.length-1) {
-                    if (!logs[serverIndex]) {
-                        logs[serverIndex] = {
-                            index: serverIndex,
-                            host: project.servers[serverIndex].host,
+                if (nextStep && sIndex <= project.servers.length-1) {
+                    if (!logs[sIndex]) {
+                        logs[sIndex] = {
+                            index: sIndex,
+                            host: project.servers[sIndex].host,
                             logs: {}
                         };
                     }
 
-                    logs[serverIndex].logs[index] = {
+                    logs[sIndex].logs[index] = {
                         project: project._id,
                         index: index,
                         step: project.steps[index],
