@@ -49,9 +49,9 @@ angular.module('app', [
         }).when('/projects/view/:id/logs/:execution', {
             controller: 'ProjectLogController as vm',
             templateUrl: '/app/project/log.html'
-        }).when('/configurations', {
-            controller: 'ConfigurationsController as vm',
-            templateUrl: '/app/configurations/configurations.html'
+        }).when('/manage', {
+            controller: 'ManageController as vm',
+            templateUrl: '/app/manage/manage.html'
         }).when('/user/settings', {
             controller: 'SettingsController as vm',
             templateUrl: '/app/users/settings/settings.html'
