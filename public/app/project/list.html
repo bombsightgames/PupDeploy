@@ -2,7 +2,13 @@
     <a href="/"><i class="fa fa-tachometer"></i> Dashboard</a> > <i class="fa fa-folder-open"></i> Projects
 </div>
 <div class="text-left">
+    <div style="float:right;">
+        <a class="btn btn-success" href="/projects/new">
+            <i class="fa fa-plus"></i> New Project
+        </a>
+    </div>
     <h2><i class="fa fa-folder-open"></i> Projects</h2>
+    <h4>Manage and create deployment configurations for remote servers.</h4>
     <div class="container-fluid well text-center" ng-if="!vm.projects || vm.projects.length <= 0">
         <h3>You do not have any projects.</h3>
     </div>
@@ -26,9 +32,4 @@
             </div>
     </div>
     <br>
-    <div class="text-right">
-        <a class="btn btn-success" href="/projects/new">
-            <i class="fa fa-plus"></i> New Project
-        </a>
-    </div>
 </div>

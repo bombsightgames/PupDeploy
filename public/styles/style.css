@@ -126,9 +126,9 @@ html {
 
 @media only screen and (max-width: 600px) {
     .btn-sq-block {
-        width: 100px;
-        height: 100px;
-        margin: 5px;
+        width: 115px;
+        height: 115px;
+        margin: 4px;
     }
 
     .btn-sq-block-content {
