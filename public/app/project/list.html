@@ -13,23 +13,23 @@
         <h3>You do not have any projects.</h3>
     </div>
     <div class="container-fluid well" ng-repeat="(index, project) in vm.projects | orderBy:'name'">
-            <div class="well-header">{{project.name}}</div>
-            <div class="row">
-                <div class="col-md-6">
-                    <pd-status status="project.status"></pd-status>
-                </div>
-                <div class="col-md-6 text-right">
-                    <a class="btn btn-primary" href="/projects/view/{{project._id}}">
-                        <i class="fa fa-info-circle"></i> View
-                    </a>
-                    <a class="btn btn-primary" href="/projects/view/{{project._id}}/logs">
-                        <i class="fa fa-list"></i> Logs
-                    </a>
-                    <a class="btn btn-primary" href="/projects/edit/{{project._id}}" ng-disabled="project.status === 'running'">
-                        <i class="fa fa-edit"></i> Configure
-                    </a>
-                </div>
+        <div class="well-header">{{project.name}}</div>
+        <div class="row">
+            <div class="col-md-6">
+                <pd-status status="project.status"></pd-status>
             </div>
+            <div class="col-md-6 text-right">
+                <a class="btn btn-primary" href="/projects/view/{{project._id}}">
+                    <i class="fa fa-info-circle"></i> View
+                </a>
+                <a class="btn btn-primary" href="/projects/view/{{project._id}}/logs">
+                    <i class="fa fa-list"></i> Logs
+                </a>
+                <a class="btn btn-primary" href="/projects/edit/{{project._id}}" ng-disabled="project.status === 'running'">
+                    <i class="fa fa-edit"></i> Configure
+                </a>
+            </div>
+        </div>
     </div>
     <br>
 </div>

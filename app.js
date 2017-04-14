@@ -45,6 +45,10 @@ db.projects = new Datastore({
     filename: './data/projects.db',
     autoload: true
 });
+db.servers = new Datastore({
+    filename: './data/servers.db',
+    autoload: true
+});
 db.logs = new Datastore({
     filename: './data/logs.db',
     autoload: true
@@ -517,6 +521,77 @@ function init() {
                 if (err) {
                     console.error('Failed to create project:', err);
                     cb('Failed to create project.');
+                } else {
+                    cb();
+                }
+            });
+        });
+
+        socket.on('server_get', function(id, cb) {
+            db.servers.findOne({_id: id}, function(err, server) {
+                if (err) {
+                    console.error('Failed to get server:', err);
+                    cb('Failed to get server.');
+                } else {
+                    if (server) {
+                        server.auth = {
+                            type: server.auth.type
+                        };
+                        cb(null, server);
+                    } else {
+                        cb('Server not found.');
+                    }
+                }
+            });
+        });
+
+        socket.on('server_delete', function(id, cb) {
+            db.servers.remove({_id: id}, function(err) {
+                if (err) {
+                    console.error('Failed to delete server:', err);
+                    cb('Failed to delete server.');
+                } else {
+                    cb();
+                }
+            });
+        });
+
+        socket.on('server_list', function(data, cb) {
+            db.servers.find({}, function(err, servers) {
+                if (err) {
+                    console.error('Failed to get servers:', err);
+                    cb('Failed to get servers.');
+                } else {
+                    cb(null, servers);
+                }
+            });
+        });
+
+        socket.on('server_update', function(data, cb) {
+            var server = {
+                name: data.name,
+                settings: data.settings,
+                server: data.server,
+                updated: Date.now()
+            };
+
+            if (data.auth && ((data.auth.username && data.auth.password) || data.auth.key)) {
+                server.auth = {
+                    type: data.auth.type,
+                    username: data.auth.username,
+                    password: data.auth.password,
+                    key: data.auth.key
+                };
+            }
+
+            db.servers.update({
+                _id: data._id
+            }, {$set: server}, {
+                upsert: true
+            }, function(err) {
+                if (err) {
+                    console.error('Failed to create server:', err);
+                    cb('Failed to create server.');
                 } else {
                     cb();
                 }

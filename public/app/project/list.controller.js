@@ -31,19 +31,6 @@ angular.module('app').controller('ProjectListController', function($scope, $loca
         });
     };
 
-    vm.deleteProject = function(id) {
-        if (confirm('Are you sure you want to delete this project?')) {
-            UserService.socket.emit('project_delete', id, function(err) {
-                if (err) {
-                    growl.error(err);
-                } else {
-                    growl.success('Project deleted successfully.');
-                    vm.refresh();
-                }
-            });
-        }
-    };
-
     $scope.$on('socket:project_status', function(event, data) {
         if (!vm.projects) {
             return;

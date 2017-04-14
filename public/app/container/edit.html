@@ -1,0 +1,94 @@
+<div class="breadcrumb">
+    <a href="/"><i class="fa fa-tachometer"></i> Dashboard</a> > <a href="/containers"><i class="fa fa-server"></i> Containers</a> > <i class="fa fa-edit"></i> {{vm.id ? 'Configure' : 'New'}}
+</div>
+<div class="text-left" class="form-group" ng-if="!vm.loading">
+    <h2><i class="fa fa-server"></i> {{vm.id ? 'Configure Server' : 'Add Server'}}</h2>
+    <br>
+    <form autocomplete="off" ng-submit="vm.save()">
+        <div class="row">
+            <div class="col-md-2 well-header">General</div>
+            <div class="col-md-10 container-fluid well">
+                <label>Name</label>
+                <input class="form-control" type="text" ng-model="vm.server.name" required="">
+                <br>
+                <label>Server</label>
+                <input class="form-control" type="text" ng-model="vm.server.server" required="">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2 well-header">Authentication</div>
+            <div class="col-md-10 container-fluid well">
+                <div ng-if="vm.id && !vm.changeAuth">
+                    <label>Current Authentication Type:</label> {{vm.server.auth.type|capitalize}}<br>
+                    <button class="btn btn-primary" ng-click="vm.changeAuth=vm.server.auth.type;">
+                        <i class="fa fa-edit"></i> Change Authentication
+                    </button>
+                </div>
+                <div ng-if="!vm.id || vm.changeAuth">
+                    <div class="form-group" style="max-width:250px;">
+                        <div ng-if="vm.id">
+                            <button class="btn btn-danger btn-xs" ng-click="vm.server.auth={}; vm.server.auth.type=vm.changeAuth; vm.changeAuth=null">
+                                <i class="fa fa-close"></i> Cancel Change
+                            </button>
+                            <br><br>
+                        </div>
+                        <label>Username:</label>
+                        <input class="form-control" type="text" ng-model="vm.server.auth.username" required="">
+                        <br>
+                        <label for="authType">Authentication Type:</label>
+                        <select class="form-control" id="authType" ng-model="vm.server.auth.type" required="">
+                            <option value="password">Password</option>
+                            <option value="key">SSH Key</option>
+                        </select>
+                    </div>
+                    <div ng-if="vm.server.auth.type == 'password'">
+                        <label>Password:</label>
+                        <input class="form-control" type="password" ng-model="vm.server.auth.password" required="">
+                    </div>
+                    <div ng-if="vm.server.auth.type == 'key'">
+                        <label>SSH Key:</label>
+                        <textarea class="form-control" rows="4" ng-model="vm.server.auth.key" required=""></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br>
+        <div class="row visible-xs">
+            <div class="col-md-4 text-center">
+                <a class="btn btn-danger" type="button" href="/containers">
+                    <i class="fa fa-close"></i> Cancel
+                </a>
+                <button class="btn btn-success" type="submit">
+                    <i class="fa fa-save"></i> Save Server
+                </button>
+            </div>
+            <br><br>
+            <div class="col-md-8 text-center">
+                <button ng-if="vm.id" type="button" class="btn btn-danger" ng-click="vm.deleteServer()">
+                    <i class="fa fa-exclamation-triangle"></i> Delete Server <i class="fa fa-exclamation-triangle"></i>
+                </button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-2"></div>
+            <div class="col-xs-10">
+                <div class="row hidden-xs">
+                    <div class="col-sm-8 text-left">
+                        <button ng-if="vm.id" type="button" class="btn btn-danger" ng-click="vm.deleteServer()">
+                            <i class="fa fa-exclamation-triangle"></i> Delete Server <i class="fa fa-exclamation-triangle"></i>
+                        </button>
+                    </div>
+                    <div class="col-sm-4 text-right">
+                        <a class="btn btn-danger" href="/containers" type="button">
+                            <i class="fa fa-close"></i> Cancel
+                        </a>
+                        <button class="btn btn-success" type="submit">
+                            <i class="fa fa-save"></i> Save Server
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <br>
+</div>

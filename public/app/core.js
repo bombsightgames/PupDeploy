@@ -50,8 +50,14 @@ angular.module('app', [
             controller: 'ProjectLogController as vm',
             templateUrl: '/app/project/log.html'
         }).when('/containers', {
-            controller: 'ContainersController as vm',
-            templateUrl: '/app/containers/list.html'
+            controller: 'ContainerListController as vm',
+            templateUrl: '/app/container/list.html'
+        }).when('/containers/servers/new', {
+            controller: 'ContainerEditController as vm',
+            templateUrl: '/app/container/edit.html'
+        }).when('/containers/servers/edit/:id', {
+            controller: 'ContainerEditController as vm',
+            templateUrl: '/app/container/edit.html'
         }).when('/manage', {
             controller: 'ManageController as vm',
             templateUrl: '/app/manage/manage.html'
