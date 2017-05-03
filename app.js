@@ -62,6 +62,8 @@ db.sessions = new Datastore({
     autoload: true
 });
 
+var serverConnections = {};
+
 if (process.env.NODE_ENV !== 'development') {
     //Clear all sessions.
     db.sessions.remove({}, function(err) {
@@ -534,6 +536,36 @@ function init() {
                     cb('Failed to get server.');
                 } else {
                     if (server) {
+                        var config = {
+                            username: server.auth.username,
+                            privateKey: server.auth.key,
+                            host: server.server,
+                            dstHost: '/var/run/docker.sock',
+                            dstPort: -2,
+                            localPort: 43253,
+                            localHost: '127.0.0.1',
+                            debug: console.log
+                        };
+
+                        console.log(config);
+                        var tunnel = require('tunnel-ssh');
+                        var tnl = tunnel(config, function (err, server) {
+                            if (err) {
+                                console.error('Failed to create SSH tunnel:', err);
+                            } else {
+                                console.log('SSH tunnel connected.', tnl, server);
+
+                                setTimeout(function() {
+                                    var Dockerode = require('dockerode');
+                                    var docker = new Dockerode({host: 'http://127.0.0.1', port: 43253});
+                                    docker.listContainers({all: true}, function (err, containers) {
+                                        console.error(err);
+                                        console.log('ALL: ' + containers);
+                                    });
+                                }, 4000);
+                            }
+                        });
+
                         server.auth = {
                             type: server.auth.type
                         };

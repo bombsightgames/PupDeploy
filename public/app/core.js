@@ -58,6 +58,9 @@ angular.module('app', [
         }).when('/containers/servers/edit/:id', {
             controller: 'ContainerEditController as vm',
             templateUrl: '/app/container/edit.html'
+        }).when('/containers/servers/view/:id', {
+            controller: 'ContainerViewController as vm',
+            templateUrl: '/app/container/view.html'
         }).when('/manage', {
             controller: 'ManageController as vm',
             templateUrl: '/app/manage/manage.html'
