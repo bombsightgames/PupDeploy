@@ -955,7 +955,7 @@ function init() {
                 var server = logs[data.server.index];
                 if (server) {
                     data.server = null;
-                    if (server.logs[data.index] ) {
+                    if (server.logs[data.index]) {
                         server.logs[data.index].output += data.output;
                     } else {
                         server.logs[data.index] = data;
@@ -973,7 +973,7 @@ function init() {
 
             function addNextStep(index) {
                 var sIndex = serverIndex-1;
-                if (index >= project.steps.length) {
+                if (index > project.steps.length) {
                     index = 0;
                 }
 
@@ -1082,7 +1082,7 @@ function init() {
 
                         setTimeout(function() {
                             runNextStep();
-                        }, 500);
+                        }, 400);
                     }, 100);
                 }
             });
