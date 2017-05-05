@@ -107,13 +107,17 @@
                             </div>
                             <div class="col-md-8 text-center">
                                 <div ng-if="trigger.type == 'postToUrl'">
-                                    <p>Post anything to the URL below and this project will be run.</p>
+                                    <p>
+                                        Post anything to the URL below and this project will be run.<br>
+                                        Specify a regex to only run if there is a match.
+                                    </p>
                                     <div class="row">
                                         <div class="col-md-2">
                                             <button class="btn btn-success" type="button" ng-click="vm.copyTextToClipboard(vm.url + '/trigger/' + trigger.hash)">Copy URL</button>
                                         </div>
                                         <div class="col-md-10">
                                             <input class="form-control" type="text" id="{{trigger.hash}}" disabled="disabled" value="{{vm.url + '/trigger/' + trigger.hash}}">
+                                            <input class="form-control" type="text" placeholder="Regex" id="regex" ng-model="trigger.regex">
                                         </div>
                                     </div>
                                 </div>

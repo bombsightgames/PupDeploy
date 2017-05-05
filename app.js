@@ -480,7 +480,8 @@ function init() {
             _.forEach(data.triggers, function(trigger) {
                 triggers.push({
                     type: trigger.type,
-                    hash: trigger.hash
+                    hash: trigger.hash,
+                    regex: trigger.regex
                 });
             });
 
@@ -811,8 +812,31 @@ function init() {
                     res.send({success: false, message: 'Server error.'});
                 } else {
                     if (project && project.settings.enableTriggers) {
-                        runProject(null, project);
-                        res.send({success: true});
+                        var match = false;
+                        _.forEach(project.triggers, function(trigger) {
+                            if (trigger.hash == hash) {
+                                if (trigger.regex && req.body) {
+                                    try {
+                                        var body = JSON.stringify(req.body);
+                                        if (body.match(trigger.regex)) {
+                                            match = true;
+                                        }
+                                    } catch (e) {
+                                        //Ignore parsing errors.
+                                    }
+                                } else {
+                                    match = true;
+                                }
+                                return false;
+                            }
+                        });
+
+                        if (match) {
+                            runProject(null, project);
+                            res.send({success: true});
+                        } else {
+                            res.send({success: false, message: 'Trigger regex did not match.'});
+                        }
                     } else {
                         res.send({success: false, message: 'Invalid trigger.'});
                     }
@@ -822,6 +846,7 @@ function init() {
             res.send({success: false, message: 'Invalid trigger.'});
         }
     });
+
 
     //TODO: Get session for verification.
     app.get('/slack', function(req, res) {
