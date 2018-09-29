@@ -61,6 +61,14 @@ db.sessions = new Datastore({
     autoload: true
 });
 
+setInterval(() => {
+    db.projects.persistence.compactDatafile();
+    db.servers.persistence.compactDatafile();
+    db.logs.persistence.compactDatafile();
+    db.users.persistence.compactDatafile();
+    db.sessions.persistence.compactDatafile();
+}, 24*60*60*1000);
+
 let serverConnections = {};
 
 if (process.env.NODE_ENV !== 'development') {

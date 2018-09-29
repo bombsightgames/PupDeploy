@@ -44,26 +44,28 @@ angular.module('app').controller('ProjectViewController', function($scope, $loca
     };
 
     $scope.$on('socket:step_run', function(event, data) {
-        data.output += '\n';
+        if (data.project === vm.project._id) {
+            data.output += '\n';
 
-        var server = vm.logs[data.server.index];
-        if (server) {
-            if (server.logs[data.index] ) {
-                server.logs[data.index].output += data.output;
+            var server = vm.logs[data.server.index];
+            if (server) {
+                if (server.logs[data.index]) {
+                    server.logs[data.index].output += data.output;
+                } else {
+                    server.logs[data.index] = data;
+                }
             } else {
+                server = data.server;
+                server.logs = {};
                 server.logs[data.index] = data;
             }
-        } else {
-            server = data.server;
-            server.logs = {};
-            server.logs[data.index] = data;
-        }
 
-        vm.logs[server.index] = server;
-        if (Object.keys(server.logs).length >= vm.project.steps.length) {
-            vm.serverIndex++;
+            vm.logs[server.index] = server;
+            if (Object.keys(server.logs).length >= vm.project.steps.length) {
+                vm.serverIndex++;
+            }
+            $scope.$apply();
         }
-        $scope.$apply();
     });
 
     function addNextStep(index) {
